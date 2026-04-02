@@ -1,0 +1,149 @@
+﻿Software Requirements Specification (SRS)
+1. Project Introduction
+The Movie Recommendation Web Application is a dynamic, API-driven platform designed to help users discover movies tailored to their preferences. It integrates real-time data from The Movie Database (TMDb) API and analyzes user interaction patterns to generate personalized recommendations. The application does not support movie streaming at this stage but may include it in future enhancements.
+2. Functional Requirements
+User authentication via Google Sign-In (Firebase)
+Search movies using TMDb API
+Browse trending and genre-based movie lists
+View detailed movie information
+Record user watch history
+Generate personalized recommendations based on genre similarity and user behavior
+Responsive UI for desktop and mobile
+3. Non-Functional Requirements
+Secure authentication and data handling
+Fast response time for API calls
+Scalable backend architecture
+High availability and fault tolerance
+Maintainable and modular codebase
+Cross-browser compatibility
+4. System Architecture
+Three-tier architecture:
+Frontend: React + Tailwind CSS
+Backend: Node.js + Express.js
+Database: MongoDB
+External Services: TMDb API, Firebase Authentication
+5. UML Diagram
+Use case diagram includes:
+Actors: User, TMDb API, Firebase Auth
+Sign in with Google
+Search movies
+Browse genres/trending
+View movie details
+Record watch history
+Get recommendations
+6. ERD Diagram
+Entities:
+User (user_id, name, email, preferences)
+Movie (movie_id, title, genre, rating, description, poster_url)
+WatchHistory (history_id, user_id, movie_id, timestamp)
+Recommendation (rec_id, user_id, movie_id, reason, score)
+Relationships:
+A User can have multiple entries in WatchHistory, each linking to a Movie.
+A User can receive multiple Recommendations, each associated with a Movie.
+WatchHistory links Users and Movies to record viewing activity.
+Recommendations link Users and Movies with additional metadata such as reason and score to explain the recommendation.
+Movies can belong to multiple genres, and Users have preferences that influence recommendations.
+7. Database Model
+MongoDB Collections:
+users
+movies
+watch_history
+recommendations Each collection stores structured documents with relevant fields for personalization and tracking.
+8. Sequence Diagram
+Steps:
+User logs in via Google
+User searches for a movie
+System fetches data from TMDb API
+User views movie details
+System records watch history
+System generates recommendations
+Recommendations displayed to user
+9. Core Features
+Google Sign-In
+Real-time movie search
+Genre and trending exploration
+Watch history tracking
+Personalized recommendations
+Responsive UI
+10. Necessary Web Pages
+Home Page
+Login Page
+Dashboard
+Search Results Page
+Movie Detail Page
+Watch History Page
+Recommendations Page
+Profile Page
+Error Page (404)
+11. Features Prioritization
+Priority
+Feature
+High
+Google Sign-In
+High
+Movie Search
+High
+Recommendations
+Medium
+Watch History
+Medium
+Genre Browsing
+Low
+Profile Page
+Low
+Favorites/Bookmarks
+12. Selection of Technologies and Tools
+Frontend: React, Tailwind CSS
+Backend: Node.js, Express.js
+Database: MongoDB
+Authentication: Firebase
+External API: TMDb API
+Version Control: Git + GitHub
+Deployment: Vercel / Heroku / Render
+13. Development Methodology
+Agile Development
+Iterative sprints
+Weekly stand-ups
+Milestone-based reviews
+Continuous integration and testing
+14. Test Cases
+Test Case ID
+Description
+Input
+Expected Output
+TC01
+Login with Google
+Google credentials
+Successful login, redirect to dashboard
+TC02
+Search for a movie
+"Inception"
+Display movie results from TMDb
+TC03
+View movie details
+Click on movie
+Show metadata and poster
+TC04
+Record watch history
+Watch a movie
+Entry in watch_history collection
+TC05
+Generate recommendations
+Based on history
+Display recommended movies
+TC06
+Browse by genre
+Select "Action"
+Show action movies
+
+15. Future Enhancements and Scalability
+Movie Streaming Integration
+Collaborative Filtering Recommendations
+User Reviews and Ratings
+Bookmark/Favorite Feature
+Admin Dashboard for Analytics
+Multi-language Support
+Mobile App Version
+Caching for faster API responses
+Load balancing and horizontal scalinging
+
