@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import { auth } from "./firebase";
 
 const themes = {
   light: {
@@ -62,7 +65,7 @@ const ThemeSwitch = ({ themeMode, onToggleTheme, colors }) => {
   );
 };
 
-const DashboardPlaceholder = ({ colors, themeMode, onToggleTheme }) => {
+const AppLayout = ({ colors, themeMode, onToggleTheme, children }) => {
   return (
     <div
       className="min-h-screen"
@@ -81,21 +84,68 @@ const DashboardPlaceholder = ({ colors, themeMode, onToggleTheme }) => {
         <ThemeSwitch themeMode={themeMode} onToggleTheme={onToggleTheme} colors={colors} />
       </header>
 
-      <main className="mx-auto flex max-w-4xl flex-col items-center px-6 pb-10 pt-16 text-center md:pt-24">
-        <h1 className="text-4xl font-bold md:text-5xl">Dashboard Coming Soon</h1>
-        <p
-          className="mt-4 max-w-2xl text-base leading-relaxed md:text-lg"
-          style={{ color: `${colors.text}cc` }}
-        >
-          You are successfully inside YOKO. The recommendation dashboard will be connected next with trending, history, and personalized movie picks.
-        </p>
-      </main>
+      <main className="mx-auto flex max-w-4xl flex-col items-center px-6 pb-10 pt-16 text-center md:pt-24">{children}</main>
     </div>
   );
 };
 
+const FeaturePlaceholder = ({ title, description, colors, themeMode, onToggleTheme }) => {
+  return (
+    <AppLayout colors={colors} themeMode={themeMode} onToggleTheme={onToggleTheme}>
+      <h1 className="text-4xl font-bold md:text-5xl">{title}</h1>
+      <p
+        className="mt-4 max-w-2xl text-base leading-relaxed md:text-lg"
+        style={{ color: `${colors.text}cc` }}
+      >
+        {description}
+      </p>
+    </AppLayout>
+  );
+};
+
+const AuthLoadingScreen = ({ colors }) => {
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center"
+      style={{
+        backgroundColor: colors.background,
+        color: colors.text,
+        fontFamily: "Andika, sans-serif",
+      }}
+    >
+      <p className="text-base md:text-lg">Checking your session...</p>
+    </div>
+  );
+};
+
+const ProtectedRoute = ({ user, isAuthReady, children }) => {
+  if (!isAuthReady) {
+    return null;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+const PublicOnlyRoute = ({ user, isAuthReady, children }) => {
+  if (!isAuthReady) {
+    return null;
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+};
+
 function App() {
   const [themeMode, setThemeMode] = useState("light");
+  const [user, setUser] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("yoko-theme");
@@ -113,11 +163,24 @@ function App() {
     window.localStorage.setItem("yoko-theme", themeMode);
   }, [themeMode]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setIsAuthReady(true);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const colors = useMemo(() => themes[themeMode], [themeMode]);
 
   const handleToggleTheme = () => {
     setThemeMode((previousMode) => (previousMode === "light" ? "dark" : "light"));
   };
+
+  if (!isAuthReady) {
+    return <AuthLoadingScreen colors={colors} />;
+  }
 
   return (
     <Router>
@@ -136,24 +199,59 @@ function App() {
         <Route
           path="/login"
           element={
-            <LoginPage
-              colors={colors}
-              themeMode={themeMode}
-              onToggleTheme={handleToggleTheme}
-              ThemeSwitch={ThemeSwitch}
-            />
+            <PublicOnlyRoute user={user} isAuthReady={isAuthReady}>
+              <LoginPage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+              />
+            </PublicOnlyRoute>
           }
         />
         <Route
           path="/dashboard"
           element={
-            <DashboardPlaceholder
-              colors={colors}
-              themeMode={themeMode}
-              onToggleTheme={handleToggleTheme}
-            />
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <DashboardPage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
+              />
+            </ProtectedRoute>
           }
         />
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <FeaturePlaceholder
+                title="Watch History Coming Soon"
+                description="Your watched and explored movies will appear here, ordered from newest to oldest for quick revisit."
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recommendations"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <FeaturePlaceholder
+                title="Recommendations Coming Soon"
+                description="Personalized picks generated from your behavior and preferred genres will be shown on this page."
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
