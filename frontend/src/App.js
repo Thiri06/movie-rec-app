@@ -143,7 +143,7 @@ const PublicOnlyRoute = ({ user, isAuthReady, children }) => {
 };
 
 function App() {
-  const [themeMode, setThemeMode] = useState("light");
+  const [themeMode, setThemeMode] = useState("dark");
   const [user, setUser] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -151,16 +151,14 @@ function App() {
     const savedTheme = window.localStorage.getItem("yoko-theme");
     if (savedTheme === "light" || savedTheme === "dark") {
       setThemeMode(savedTheme);
-      return;
-    }
-
-    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    } else {
       setThemeMode("dark");
     }
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem("yoko-theme", themeMode);
+    document.documentElement.style.colorScheme = themeMode;
   }, [themeMode]);
 
   useEffect(() => {

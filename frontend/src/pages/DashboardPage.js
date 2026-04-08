@@ -6,6 +6,7 @@ import { auth } from "../firebase";
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
+// Build a usable poster URL and fall back when TMDB has no image.
 const getPosterUrl = (posterPath) => {
   if (!posterPath) {
     return "https://via.placeholder.com/500x750?text=No+Poster";
@@ -13,6 +14,7 @@ const getPosterUrl = (posterPath) => {
   return `${IMAGE_BASE_URL}${posterPath}`;
 };
 
+// Normalize TMDB ratings for compact badge display.
 const formatRating = (rating) => {
   if (typeof rating !== "number") {
     return "N/A";
@@ -20,6 +22,7 @@ const formatRating = (rating) => {
   return rating.toFixed(1);
 };
 
+// Extract the release year used by the dashboard year filter.
 const getMovieYear = (movie) => {
   if (!movie?.release_date) {
     return null;
@@ -27,6 +30,7 @@ const getMovieYear = (movie) => {
   return Number(movie.release_date.slice(0, 4));
 };
 
+// Prefer official YouTube trailers, then fall back to any trailer/teaser.
 const pickTrailer = (videos) => {
   if (!Array.isArray(videos)) {
     return null;
@@ -43,6 +47,7 @@ const pickTrailer = (videos) => {
   return officialTrailer || youtubeTrailers[0] || null;
 };
 
+// Reusable movie card used by search, genre, recommendation, and trending sections.
 const MovieCard = ({ movie, colors, onSelect, index }) => {
   return (
     <article
@@ -104,6 +109,8 @@ const MovieCard = ({ movie, colors, onSelect, index }) => {
 const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) => {
   const navigate = useNavigate();
   const trailerScrollRef = useRef(null);
+
+  // Core dashboard state for TMDB content, filters, and personalization signals.
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [activeGenreId, setActiveGenreId] = useState(null);
@@ -125,11 +132,14 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
   const [watchSignals, setWatchSignals] = useState([]);
 
   const tmdbApiKey = process.env.REACT_APP_TMDB_API_KEY;
+
+  // Generate the year dropdown options once on initial render.
   const yearOptions = useMemo(() => {
     const now = new Date().getFullYear();
     return ["all", ...Array.from({ length: 40 }, (_, index) => String(now - index))];
   }, []);
 
+  // Shared TMDB request helper for all dashboard data calls.
   const tmdbRequest = async (path, params = {}) => {
     if (!tmdbApiKey) {
       throw new Error("Missing REACT_APP_TMDB_API_KEY in your frontend .env file.");
@@ -150,6 +160,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     return response.json();
   };
 
+  // Infer the user's favorite genre from their recent interactions.
   const getTopGenreId = useMemo(() => {
     const counter = {};
     watchSignals.forEach((genreId) => {
@@ -164,6 +175,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     return activeGenreId;
   }, [activeGenreId, watchSignals]);
 
+  // Record genre interactions when a movie card is opened.
   const captureInteraction = (movie) => {
     if (!movie || !Array.isArray(movie.genre_ids)) {
       return;
@@ -172,6 +184,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     setWatchSignals((previous) => [...previous, ...movie.genre_ids].slice(-60));
   };
 
+  // Load the weekly trending movies list.
   const fetchTrendingMovies = async () => {
     setLoading((previous) => ({ ...previous, trending: true }));
     try {
@@ -189,6 +202,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Load available TMDB genres and set the first one as the initial tab.
   const fetchGenres = async () => {
     setLoading((previous) => ({ ...previous, genres: true }));
     try {
@@ -205,6 +219,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Load movies for the currently selected genre.
   const fetchGenreMovies = async (genreId) => {
     if (!genreId) {
       return;
@@ -228,6 +243,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Build recommendation cards from the user's strongest genre signal.
   const fetchRecommendations = async (genreId) => {
     if (!genreId) {
       setRecommendations([]);
@@ -253,35 +269,42 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Fetch enough popular titles to fill the trailer carousel with 10+ playable items.
   const fetchPopularTrailers = async () => {
     setLoading((previous) => ({ ...previous, popularTrailers: true }));
     try {
-      const popularData = await tmdbRequest("/movie/popular");
-      const candidates = (popularData.results || []).slice(0, 8);
+      const popularPages = await Promise.all([
+        tmdbRequest("/movie/popular", { page: "1" }),
+        tmdbRequest("/movie/popular", { page: "2" }),
+      ]);
+      const candidates = popularPages.flatMap((page) => page.results || []).slice(0, 24);
+      const trailerResults = [];
 
-      const videosByMovie = await Promise.all(
-        candidates.map(async (movie) => {
-          try {
-            const videoData = await tmdbRequest(`/movie/${movie.id}/videos`);
-            const trailer = pickTrailer(videoData.results || []);
-            if (!trailer) {
-              return null;
-            }
-
-            return {
-              id: movie.id,
-              title: movie.title,
-              posterPath: movie.poster_path,
-              trailerKey: trailer.key,
-              trailerName: trailer.name || `${movie.title} Trailer`,
-            };
-          } catch (_error) {
-            return null;
+      for (const movie of candidates) {
+        try {
+          const videoData = await tmdbRequest(`/movie/${movie.id}/videos`);
+          const trailer = pickTrailer(videoData.results || []);
+          if (!trailer) {
+            continue;
           }
-        })
-      );
 
-      setPopularTrailers(videosByMovie.filter(Boolean).slice(0, 4));
+          trailerResults.push({
+            id: movie.id,
+            title: movie.title,
+            posterPath: movie.poster_path,
+            trailerKey: trailer.key,
+            trailerName: trailer.name || `${movie.title} Trailer`,
+          });
+
+          if (trailerResults.length >= 12) {
+            break;
+          }
+        } catch (_error) {
+          continue;
+        }
+      }
+
+      setPopularTrailers(trailerResults);
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -289,17 +312,20 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Initial page bootstrapping for genres and trailer content.
   useEffect(() => {
     fetchGenres();
     fetchPopularTrailers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Refresh trending results whenever the year filter changes.
   useEffect(() => {
     fetchTrendingMovies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear]);
 
+  // Refresh the genre shelf when the active genre or year changes.
   useEffect(() => {
     if (activeGenreId) {
       fetchGenreMovies(activeGenreId);
@@ -307,11 +333,13 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGenreId, selectedYear]);
 
+  // Recompute recommendations whenever user signals or year filters shift.
   useEffect(() => {
     fetchRecommendations(getTopGenreId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getTopGenreId, selectedYear]);
 
+  // Debounced movie search to avoid firing a request on every keystroke.
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -338,6 +366,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedYear]);
 
+  // End the Firebase session and return the user to login.
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -347,12 +376,13 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     }
   };
 
+  // Move the horizontal trailer rail with the arrow controls.
   const scrollTrailers = (direction) => {
     if (!trailerScrollRef.current) {
       return;
     }
 
-    const amount = 280;
+    const amount = 420;
     trailerScrollRef.current.scrollBy({
       left: direction === "left" ? -amount : amount,
       behavior: "smooth",
@@ -379,6 +409,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
         style={{ backgroundColor: `${colors.accent}2d` }}
       />
 
+      {/* Sticky dashboard header with branding, user identity, theme toggle, and logout. */}
       <header className="sticky top-0 z-20 border-b backdrop-blur"
         style={{
           borderColor: `${colors.secondary}`,
@@ -415,6 +446,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
       </header>
 
       <main className="mx-auto grid w-full max-w-7xl gap-7 px-4 pb-10 pt-6 md:px-8">
+        {/* Global error banner for failed TMDB or auth-related actions. */}
         {errorMessage ? (
           <div
             className="rounded-2xl px-4 py-3 text-sm font-semibold"
@@ -428,6 +460,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
           </div>
         ) : null}
 
+        {/* Search and year filter section with live movie search results. */}
         <section
           className="yoko-fade-up rounded-3xl p-5 md:p-6"
           style={{
@@ -502,8 +535,9 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
           </div>
         </section>
 
+        {/* Popular movie trailer section with a compact horizontal carousel and arrow controls. */}
         <section
-          className="yoko-fade-up rounded-3xl p-5 md:p-6"
+          className="yoko-fade-up min-w-0 overflow-hidden rounded-3xl p-4 md:p-5"
           style={{
             border: `1px solid ${colors.secondary}`,
             background: `linear-gradient(120deg, ${colors.background}, ${colors.secondary}55)`,
@@ -513,7 +547,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
             <div>
               <h3 className="text-xl font-bold md:text-2xl">Popular Movie Trailers</h3>
               <p className="mt-1 text-sm md:text-base" style={{ color: `${colors.text}bc` }}>
-                Watch official trailers from TMDB popular picks.
+                A compact trailer strip with arrow controls and horizontal scrolling.
               </p>
             </div>
             <button
@@ -530,16 +564,16 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
             </button>
           </div>
 
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
               type="button"
               onClick={() => scrollTrailers("left")}
               aria-label="Scroll trailers left"
-              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full p-2"
+              className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl px-3 py-2 shadow-lg"
               style={{
-                backgroundColor: `${colors.background}db`,
-                color: colors.text,
-                border: `1px solid ${colors.accent}`,
+                backgroundColor: colors.primary,
+                color: "#ffffff",
+                border: `1px solid ${colors.primary}`,
               }}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
@@ -551,11 +585,11 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
               type="button"
               onClick={() => scrollTrailers("right")}
               aria-label="Scroll trailers right"
-              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full p-2"
+              className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-2xl px-3 py-2 shadow-lg"
               style={{
-                backgroundColor: `${colors.background}db`,
-                color: colors.text,
-                border: `1px solid ${colors.accent}`,
+                backgroundColor: colors.primary,
+                color: "#ffffff",
+                border: `1px solid ${colors.primary}`,
               }}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
@@ -565,24 +599,14 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
 
             <div
               ref={trailerScrollRef}
-              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pr-10 pt-1"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
+              className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 pr-10 pt-1"
+              style={{ scrollbarWidth: "thin" }}
             >
-              <style>{`.no-scrollbar::-webkit-scrollbar{display:none;}`}</style>
-            </div>
-
-            <div
-              ref={trailerScrollRef}
-              className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 pr-10 pt-1"
-            >
-              {(loading.popularTrailers ? new Array(6).fill(null) : popularTrailers).map((item, index) =>
+              {(loading.popularTrailers ? new Array(10).fill(null) : popularTrailers).map((item, index) =>
                 item ? (
                   <article
                     key={item.id}
-                    className="yoko-fade-up w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl"
+                    className="yoko-fade-up w-[190px] shrink-0 snap-start overflow-hidden rounded-2xl"
                     style={{
                       border: `1px solid ${colors.secondary}`,
                       backgroundColor: `${colors.background}e0`,
@@ -604,19 +628,19 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span
-                            className="rounded-full p-2"
+                            className="flex h-8 w-8 items-center justify-center rounded-full"
                             style={{
-                              backgroundColor: `${colors.background}d8`,
-                              border: `1px solid ${colors.accent}`,
+                              backgroundColor: "#ff3b30",
+                              boxShadow: "0 8px 16px rgba(255, 59, 48, 0.24)",
                             }}
                           >
-                            <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" style={{ color: colors.primary }}>
+                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-current" style={{ color: "#ffffff" }}>
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </span>
                         </div>
                       </div>
-                      <div className="space-y-1 p-3">
+                      <div className="space-y-1 p-2.5">
                         <h4
                           className="text-sm font-bold"
                           style={{
@@ -646,20 +670,13 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
                 ) : (
                   <div
                     key={`trailer-skeleton-${index}`}
-                    className="yoko-shimmer aspect-video w-[220px] shrink-0 rounded-2xl"
+                    className="yoko-shimmer aspect-video w-[190px] shrink-0 rounded-2xl"
                     style={{ backgroundColor: `${colors.secondary}` }}
                   />
                 )
               )}
             </div>
 
-            {(loading.popularTrailers ? new Array(4).fill(null) : popularTrailers).map((item, index) =>
-              item ? (
-                <React.Fragment key={`trailer-hidden-${item.id}-${index}`} />
-              ) : (
-                <React.Fragment key={`trailer-hidden-skeleton-${index}`} />
-              )
-            )}
             {!loading.popularTrailers && popularTrailers.length === 0 ? (
               <p className="text-sm" style={{ color: `${colors.text}b3` }}>
                 No trailers available right now. Try refreshing.
@@ -668,8 +685,10 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
           </div>
         </section>
 
+        {/* Main discovery area: genres, recommendations, and weekly trending movies. */}
         <section className="grid gap-7 lg:grid-cols-12">
           <div className="grid gap-7 lg:col-span-7">
+            {/* Genre browser section for curated movies by category. */}
             <div
               className="yoko-fade-up rounded-3xl p-5"
               style={{
@@ -723,6 +742,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
               </div>
             </div>
 
+            {/* Personalized recommendation section based on captured watch signals. */}
             <div
               className="yoko-fade-up rounded-3xl p-5"
               style={{
@@ -766,6 +786,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
             </div>
           </div>
 
+          {/* Trending movies section showing the current weekly standouts. */}
           <div
             className="yoko-fade-up rounded-3xl p-5 lg:col-span-5"
             style={{
@@ -811,6 +832,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
         </section>
       </main>
 
+      {/* Footer crediting TMDB as the external movie data provider. */}
       <footer
         className="mx-auto mt-2 w-full max-w-7xl rounded-2xl px-4 py-5 md:px-8"
         style={{

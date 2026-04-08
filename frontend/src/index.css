@@ -7,6 +7,8 @@
 body {
   margin: 0;
   font-family: "Andika", sans-serif;
+  background-color: #010104;
+  color: #eae9fc;
 }
 
 @keyframes yokoFadeUp {
