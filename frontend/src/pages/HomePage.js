@@ -53,7 +53,7 @@ const HomePage = ({ colors, themeMode, onToggleTheme, ThemeSwitch }) => {
               className="rounded-full px-7 py-3 text-sm font-semibold transition hover:-translate-y-0.5"
               style={{ backgroundColor: colors.primary, color: "#ffffff" }}
             >
-              Start with Google
+              Sign In with Google
             </Link>
             <Link
               to="/login"
