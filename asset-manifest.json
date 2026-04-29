@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/movie-rec-app/static/css/main.ed32616f.css",
+    "main.js": "/movie-rec-app/static/js/main.b3674f2b.js",
+    "static/js/453.825386d9.chunk.js": "/movie-rec-app/static/js/453.825386d9.chunk.js",
+    "index.html": "/movie-rec-app/index.html",
+    "main.ed32616f.css.map": "/movie-rec-app/static/css/main.ed32616f.css.map",
+    "main.b3674f2b.js.map": "/movie-rec-app/static/js/main.b3674f2b.js.map",
+    "453.825386d9.chunk.js.map": "/movie-rec-app/static/js/453.825386d9.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ed32616f.css",
+    "static/js/main.b3674f2b.js"
+  ]
+}
