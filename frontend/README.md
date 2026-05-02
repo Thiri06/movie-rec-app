@@ -1,4 +1,43 @@
-# Getting Started with Create React App
+# YOKO Movie Recommendation Frontend
+
+This frontend is a Create React App single-page app that uses:
+
+- React and React Router for the UI and page navigation.
+- Firebase Authentication for email/password and Google sign-in.
+- TMDB browser API requests from the dashboard.
+- Tailwind CSS utility classes for styling.
+
+The Express/MongoDB backend in `../backend` is separate. GitHub Pages can host this frontend only because Pages is static hosting; deploy the backend separately if you add API endpoints that the frontend must call.
+
+## GitHub Pages Deployment
+
+The app is configured for the repository URL:
+
+```text
+https://thiri06.github.io/movie-rec-app/
+```
+
+Deploy from this `frontend` folder:
+
+```bash
+npm install
+npm run deploy
+```
+
+Then in GitHub, open the repository settings:
+
+1. Go to `Settings` -> `Pages`.
+2. Set `Build and deployment` to `Deploy from a branch`.
+3. Select the `gh-pages` branch and `/ (root)` folder.
+4. Save, then wait a minute or two for Pages to publish.
+
+If you see GitHub's `404 File not found` page at `/movie-rec-app/`, Pages is not serving the built frontend. The common causes are that the `gh-pages` branch has not been deployed yet, Pages is pointed at `main` instead of `gh-pages`, or the built files are inside `frontend/build` on `main` instead of at the Pages publishing root.
+
+The `homepage`, router basename, and `404.html` copy step are required because this repo is hosted under `/movie-rec-app/` rather than at the domain root. The copied `404.html` lets direct visits like `/movie-rec-app/login` load the React app instead of showing GitHub's 404 page.
+
+## Local Development
+
+Create `frontend/.env` from `.env.example`, then add your Firebase and TMDB values. CRA only exposes environment variables prefixed with `REACT_APP_`.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

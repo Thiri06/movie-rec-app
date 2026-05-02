@@ -4,7 +4,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import DiscoverPage from "./pages/DiscoverPage";
+import FavoritesPage from "./pages/FavoritesPage";
+import MovieDetailsPage from "./pages/MovieDetailsPage";
+import WatchHistoryPage from "./pages/WatchHistoryPage";
 import { auth } from "./firebase";
+import { syncCurrentUser } from "./utils/apiClient";
 
 const themes = {
   light: {
@@ -165,6 +170,12 @@ function App() {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setIsAuthReady(true);
+
+      if (currentUser) {
+        syncCurrentUser(currentUser).catch((error) => {
+          console.error("User sync failed:", error);
+        });
+      }
     });
 
     return unsubscribe;
@@ -181,7 +192,7 @@ function App() {
   }
 
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL}>
       <Routes>
         <Route
           path="/"
@@ -222,15 +233,43 @@ function App() {
           }
         />
         <Route
-          path="/history"
+          path="/discover"
           element={
             <ProtectedRoute user={user} isAuthReady={isAuthReady}>
-              <FeaturePlaceholder
-                title="Watch History Coming Soon"
-                description="Your watched and explored movies will appear here, ordered from newest to oldest for quick revisit."
+              <DiscoverPage
                 colors={colors}
                 themeMode={themeMode}
                 onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/:movieId"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <MovieDetailsPage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <WatchHistoryPage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
               />
             </ProtectedRoute>
           }
@@ -245,6 +284,34 @@ function App() {
                 colors={colors}
                 themeMode={themeMode}
                 onToggleTheme={handleToggleTheme}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <FeaturePlaceholder
+                title="Profile Coming Soon"
+                description="Your preferences, account details, and personalization settings will appear here."
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/favorites"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <FavoritesPage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
               />
             </ProtectedRoute>
           }
