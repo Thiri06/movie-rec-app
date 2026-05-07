@@ -1,5 +1,7 @@
 const { requestTmdb } = require("../services/tmdbService");
 const { upsertMovieFromTmdb } = require("../services/movieService");
+const AiInsight = require("../models/AiInsight");
+const { generateMovieInsight } = require("../services/geminiService");
 
 const searchMovies = async (req, res, next) => {
   try {
@@ -48,8 +50,39 @@ const getMovieDetails = async (req, res, next) => {
       append_to_response: "videos,credits",
     });
     const movie = await upsertMovieFromTmdb(data);
+    let aiInsight = await AiInsight.findOne({ tmdbId: movie.tmdbId });
+    let aiInsightError = null;
 
-    res.json({ tmdb: data, movie });
+    if (!aiInsight) {
+      try {
+        const generatedInsight = await generateMovieInsight(movie);
+        if (generatedInsight) {
+          aiInsight = await AiInsight.findOneAndUpdate(
+            { tmdbId: movie.tmdbId },
+            {
+              movieId: movie._id,
+              tmdbId: movie.tmdbId,
+              summary: generatedInsight.summary,
+              moodTags: generatedInsight.moodTags,
+              generatedBy: generatedInsight.generatedBy,
+            },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+          );
+        }
+      } catch (insightError) {
+        aiInsightError = insightError.message;
+        console.error("Gemini insight generation failed:", insightError.message);
+      }
+    }
+
+    res.json({
+      tmdb: data,
+      movie,
+      aiInsight,
+      aiInsightAvailable: Boolean(aiInsight),
+      aiInsightConfigured: Boolean(process.env.GEMINI_API_KEY),
+      aiInsightError,
+    });
   } catch (error) {
     next(error);
   }

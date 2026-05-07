@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import DemoPage from "./pages/DemoPage";
 import DashboardPage from "./pages/DashboardPage";
 import DiscoverPage from "./pages/DiscoverPage";
+import ProfilePage from "./pages/ProfilePage";
 import FavoritesPage from "./pages/FavoritesPage";
 import MovieDetailsPage from "./pages/MovieDetailsPage";
 import WatchHistoryPage from "./pages/WatchHistoryPage";
@@ -287,7 +288,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
+        {/* <Route
           path="/recommendations"
           element={
             <ProtectedRoute user={user} isAuthReady={isAuthReady}>
@@ -300,7 +301,7 @@ function App() {
               />
             </ProtectedRoute>
           }
-        />
+        /> */}
         <Route
           path="/profile"
           element={

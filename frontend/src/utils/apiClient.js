@@ -61,6 +61,21 @@ export const syncCurrentUser = async (user) => {
   });
 };
 
+export const getCurrentUserProfile = async () => {
+  return apiRequest("/users/me");
+};
+
+export const updateUserPreferences = async (preferences) => {
+  return apiRequest("/users/preferences", {
+    method: "PATCH",
+    body: JSON.stringify({ preferences }),
+  });
+};
+
+export const getMovieDetails = async (tmdbId) => {
+  return apiRequest(`/movies/${tmdbId}`);
+};
+
 export const recordMovieDetailView = async (tmdbId, source = "details") => {
   return apiRequest("/interactions", {
     method: "POST",

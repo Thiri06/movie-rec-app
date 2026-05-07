@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { auth } from "../firebase";
-import { addFavoriteMovie, markMovieWatched, recordMovieDetailView } from "../utils/apiClient";
+import { addFavoriteMovie, getMovieDetails, markMovieWatched, recordMovieDetailView } from "../utils/apiClient";
 import {
   FAVORITES_KEY,
   WATCH_HISTORY_KEY,
   addStoredMovie,
-  createTmdbRequest,
   formatRating,
   getPosterUrl,
   pickTrailer,
@@ -18,27 +17,26 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
   const { movieId } = useParams();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [aiInsight, setAiInsight] = useState(null);
+  const [aiInsightConfigured, setAiInsightConfigured] = useState(false);
+  const [aiInsightError, setAiInsightError] = useState("");
   const [trailer, setTrailer] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isMarkingWatched, setIsMarkingWatched] = useState(false);
 
-  const tmdbRequest = useMemo(
-    () => createTmdbRequest(process.env.REACT_APP_TMDB_API_KEY),
-    []
-  );
-
   useEffect(() => {
     const fetchMovieDetails = async () => {
       setIsLoading(true);
       try {
-        const data = await tmdbRequest(`/movie/${movieId}`, {
-          append_to_response: "videos",
-        });
-        setMovie(data);
-        setTrailer(pickTrailer(data.videos?.results || []));
-        addStoredMovie(WATCH_HISTORY_KEY, data);
+        const data = await getMovieDetails(movieId);
+        setMovie(data.tmdb);
+        setAiInsight(data.aiInsight || null);
+        setAiInsightConfigured(Boolean(data.aiInsightConfigured));
+        setAiInsightError(data.aiInsightError || "");
+        setTrailer(pickTrailer(data.tmdb?.videos?.results || []));
+        addStoredMovie(WATCH_HISTORY_KEY, data.tmdb);
         recordMovieDetailView(movieId, "details").catch((interactionError) => {
           console.error("Backend watch history recording failed:", interactionError);
         });
@@ -50,7 +48,6 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
     };
 
     fetchMovieDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movieId]);
 
   const handleSignOut = async () => {
@@ -192,6 +189,48 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
                 <p className="mt-4 max-w-3xl text-sm leading-relaxed md:text-base" style={{ color: `${colors.text}c9` }}>
                   {movie.overview || "No overview available."}
                 </p>
+
+                <div
+                  className="mt-5 rounded-2xl p-4"
+                  style={{
+                    backgroundColor: `${colors.background}d9`,
+                    border: `1px solid ${colors.accent}45`,
+                  }}
+                >
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h3 className="text-base font-bold md:text-lg">Gemini Description</h3>
+                    <span
+                      className="w-fit rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{
+                        backgroundColor: aiInsight ? `${colors.primary}22` : `${colors.secondary}c9`,
+                        color: aiInsight ? colors.primary : `${colors.text}b8`,
+                      }}
+                    >
+                      {aiInsight ? "Generated" : aiInsightConfigured ? "Unavailable" : "API key needed"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed md:text-base" style={{ color: `${colors.text}c9` }}>
+                    {aiInsight?.summary ||
+                      (aiInsightConfigured
+                        ? aiInsightError
+                          ? "Gemini is configured, but the request failed. Try refreshing in a moment or switch GEMINI_MODEL to gemini-2.0-flash."
+                          : "The AI description could not be generated for this movie yet."
+                        : "Add GEMINI_API_KEY to the backend environment to generate spoiler-free AI descriptions.")}
+                  </p>
+                  {aiInsight?.moodTags?.length > 0 ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {aiInsight.moodTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full px-3 py-1 text-xs font-semibold"
+                          style={{ backgroundColor: `${colors.secondary}c9`, color: colors.text }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {(movie.genres || []).map((genre) => (
