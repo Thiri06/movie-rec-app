@@ -5,12 +5,16 @@ import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
 import { auth } from "../firebase";
 import {
-  FAVORITES_KEY,
-  WATCH_HISTORY_KEY,
+  getFavoriteMovies,
+  getRecommendations as getBackendRecommendations,
+  getWatchHistory,
+  normalizeRecommendationRecord,
+  normalizeSavedMovieRecord,
+} from "../utils/apiClient";
+import {
   createTmdbRequest,
   getTopGenreIdFromMovies,
   pickTrailer,
-  readStoredMovies,
 } from "../utils/movieApi";
 
 const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) => {
@@ -36,20 +40,57 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
     []
   );
 
+  const normalizedWatchHistory = useMemo(
+    () => watchHistory.map(normalizeSavedMovieRecord).filter(Boolean),
+    [watchHistory]
+  );
+  const normalizedFavorites = useMemo(
+    () => favorites.map(normalizeSavedMovieRecord).filter(Boolean),
+    [favorites]
+  );
+
   const personalizationSeed = useMemo(() => {
-    const historyTopGenreId = getTopGenreIdFromMovies(watchHistory);
-    const favoriteTopGenreId = getTopGenreIdFromMovies(favorites);
+    const historyTopGenreId = getTopGenreIdFromMovies(normalizedWatchHistory);
+    const favoriteTopGenreId = getTopGenreIdFromMovies(normalizedFavorites);
 
     return historyTopGenreId || favoriteTopGenreId || genres[0]?.id || null;
-  }, [favorites, genres, watchHistory]);
+  }, [genres, normalizedFavorites, normalizedWatchHistory]);
 
   const activeGenreName =
     genres.find((genre) => genre.id === personalizationSeed)?.name || "your recent activity";
-  const explanationMovie = watchHistory[0]?.title || favorites[0]?.title || "your saved taste profile";
+  const explanationMovie =
+    normalizedWatchHistory[0]?.title || normalizedFavorites[0]?.title || "your saved taste profile";
+  const explanationPrefix =
+    normalizedWatchHistory.length > 0
+      ? "Because you watched"
+      : normalizedFavorites.length > 0
+        ? "Because you favorited"
+        : "Based on";
 
-  const loadStoredPersonalization = () => {
-    setWatchHistory(readStoredMovies(WATCH_HISTORY_KEY));
-    setFavorites(readStoredMovies(FAVORITES_KEY));
+  const loadBackendPersonalization = async ({ refreshRecommendations = false } = {}) => {
+    setLoading((previous) => ({ ...previous, recommendations: true }));
+    setErrorMessage("");
+    try {
+      const [historyData, favoritesData, recommendationData] = await Promise.all([
+        getWatchHistory(),
+        getFavoriteMovies(),
+        getBackendRecommendations(refreshRecommendations),
+      ]);
+
+      setWatchHistory(historyData || []);
+      setFavorites(favoritesData || []);
+      setRecommendations(
+        (recommendationData || [])
+          .map(normalizeRecommendationRecord)
+          .filter(Boolean)
+          .slice(0, 8)
+      );
+    } catch (error) {
+      setErrorMessage(error.message);
+      setRecommendations([]);
+    } finally {
+      setLoading((previous) => ({ ...previous, recommendations: false }));
+    }
   };
 
   const fetchGenres = async () => {
@@ -73,27 +114,6 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
       setErrorMessage(error.message);
     } finally {
       setLoading((previous) => ({ ...previous, trending: false }));
-    }
-  };
-
-  const fetchRecommendations = async (genreId) => {
-    if (!genreId) {
-      setRecommendations([]);
-      return;
-    }
-
-    setLoading((previous) => ({ ...previous, recommendations: true }));
-    try {
-      const data = await tmdbRequest("/discover/movie", {
-        with_genres: String(genreId),
-        sort_by: "vote_average.desc",
-        "vote_count.gte": "180",
-      });
-      setRecommendations((data.results || []).slice(0, 8));
-    } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoading((previous) => ({ ...previous, recommendations: false }));
     }
   };
 
@@ -139,17 +159,12 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
   };
 
   useEffect(() => {
-    loadStoredPersonalization();
+    loadBackendPersonalization();
     fetchGenres();
     fetchPopularTrailers();
     fetchTrendingMovies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    fetchRecommendations(personalizationSeed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personalizationSeed]);
 
   const handleSignOut = async () => {
     try {
@@ -232,7 +247,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
             </div>
             <button
               type="button"
-              onClick={loadStoredPersonalization}
+              onClick={() => loadBackendPersonalization({ refreshRecommendations: true })}
               className="rounded-full px-4 py-2 text-sm font-semibold"
               style={{
                 backgroundColor: colors.secondary,
@@ -383,7 +398,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
 
             <div className="mb-4 flex flex-wrap gap-2">
               {[
-                `Because you watched ${explanationMovie}`,
+                `${explanationPrefix} ${explanationMovie}`,
                 `${watchHistory.length} history signal${watchHistory.length === 1 ? "" : "s"}`,
                 `${favorites.length} favorite signal${favorites.length === 1 ? "" : "s"}`,
               ].map((tag) => (
@@ -406,6 +421,13 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
                     colors={colors}
                     index={index}
                     onSelect={(selectedMovie) => navigate(`/movies/${selectedMovie.id}`)}
+                    actions={
+                      movie.recommendationMeta?.humanExplanation ? (
+                        <p className="text-xs leading-snug sm:col-span-2" style={{ color: `${colors.text}bf` }}>
+                          {movie.recommendationMeta.humanExplanation}
+                        </p>
+                      ) : null
+                    }
                   />
                 ) : (
                   <div

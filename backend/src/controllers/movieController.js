@@ -45,7 +45,7 @@ const getTrendingMovies = async (_req, res, next) => {
 const getMovieDetails = async (req, res, next) => {
   try {
     const data = await requestTmdb(`/movie/${req.params.tmdbId}`, {
-      append_to_response: "videos",
+      append_to_response: "videos,credits",
     });
     const movie = await upsertMovieFromTmdb(data);
 

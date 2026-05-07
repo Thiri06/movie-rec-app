@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const explanationDetailSchema = new mongoose.Schema(
+  {
+    type: String,
+    text: String,
+  },
+  { _id: false }
+);
+
 const recommendationSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -12,12 +20,20 @@ const recommendationSchema = new mongoose.Schema(
       default: "hybrid",
     },
     reason: { type: String, required: true },
+    humanExplanation: { type: String },
+    explanationDetails: [explanationDetailSchema],
     explanationTags: [{ type: String }],
     signals: {
       matchedGenres: [{ type: Number }],
+      matchedCast: [{ type: Number }],
+      matchedDirectors: [{ type: Number }],
       basedOnMovieIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Movie" }],
+      collaborativeUserIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
       favoriteBoost: { type: Number, default: 0 },
       historyBoost: { type: Number, default: 0 },
+      interactionBoost: { type: Number, default: 0 },
+      peopleBoost: { type: Number, default: 0 },
+      collaborativeBoost: { type: Number, default: 0 },
       popularityBoost: { type: Number, default: 0 },
     },
     generatedAt: { type: Date, default: Date.now, index: true },

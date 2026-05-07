@@ -8,6 +8,24 @@ const genreSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const creditPersonSchema = new mongoose.Schema(
+  {
+    id: Number,
+    name: String,
+  },
+  { _id: false }
+);
+
+const castMemberSchema = new mongoose.Schema(
+  {
+    id: Number,
+    name: String,
+    character: String,
+    order: Number,
+  },
+  { _id: false }
+);
+
 const movieSchema = new mongoose.Schema(
   {
     tmdbId: { type: Number, required: true, unique: true, index: true },
@@ -16,6 +34,10 @@ const movieSchema = new mongoose.Schema(
     overview: { type: String },
     genres: [genreSchema],
     genreIds: [{ type: Number, index: true }],
+    cast: [castMemberSchema],
+    castIds: [{ type: Number, index: true }],
+    directors: [creditPersonSchema],
+    directorIds: [{ type: Number, index: true }],
     releaseDate: { type: String },
     releaseYear: { type: Number, index: true },
     voteAverage: { type: Number },

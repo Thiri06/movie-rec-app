@@ -136,9 +136,12 @@ export const normalizeRecommendationRecord = (record) => {
     ...movie,
     recommendationMeta: {
       reason: record.reason,
+      humanExplanation: record.humanExplanation,
+      explanationDetails: record.explanationDetails || [],
       score: record.score,
       algorithm: record.algorithm,
       explanationTags: record.explanationTags || [],
+      signals: record.signals,
     },
   };
 };

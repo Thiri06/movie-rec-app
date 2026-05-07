@@ -18,7 +18,9 @@ const recordInteraction = async (req, res, next) => {
       return res.status(400).json({ message: "tmdbId is required." });
     }
 
-    const data = await requestTmdb(`/movie/${tmdbId}`);
+    const data = await requestTmdb(`/movie/${tmdbId}`, {
+      append_to_response: "credits",
+    });
     const movie = await upsertMovieFromTmdb(data);
     const interaction = await UserInteraction.create({
       userId: user._id,
@@ -29,6 +31,8 @@ const recordInteraction = async (req, res, next) => {
       metadata: {
         ...metadata,
         genreIds: metadata.genreIds || movie.genreIds,
+        castIds: metadata.castIds || movie.castIds,
+        directorIds: metadata.directorIds || movie.directorIds,
       },
     });
 

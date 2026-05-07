@@ -30,7 +30,9 @@ const addFavorite = async (req, res, next) => {
       return res.status(400).json({ message: "tmdbId is required." });
     }
 
-    const data = await requestTmdb(`/movie/${tmdbId}`);
+    const data = await requestTmdb(`/movie/${tmdbId}`, {
+      append_to_response: "credits",
+    });
     const movie = await upsertMovieFromTmdb(data);
     const favorite = await Favorite.findOneAndUpdate(
       { userId: user._id, tmdbId: movie.tmdbId },

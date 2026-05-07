@@ -18,6 +18,8 @@ const userInteractionSchema = new mongoose.Schema(
     },
     metadata: {
       genreIds: [{ type: Number }],
+      castIds: [{ type: Number }],
+      directorIds: [{ type: Number }],
       searchQuery: String,
       recommendationId: String,
     },
