@@ -8,7 +8,7 @@ const userInteractionSchema = new mongoose.Schema(
     eventType: {
       type: String,
       required: true,
-      enum: ["view_details", "trailer_click", "search_click", "recommendation_click", "favorite_add"],
+      enum: ["view_details", "trailer_click", "search_click", "recommendation_click", "favorite_add", "mark_watched"],
       index: true,
     },
     source: {

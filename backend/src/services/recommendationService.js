@@ -7,6 +7,7 @@ const { upsertMovieFromTmdb } = require("./movieService");
 
 const SOURCE_WEIGHTS = {
   favorite: 5,
+  markedWatched: 4,
   watchHistory: 3,
   interaction: 1,
 };
@@ -102,7 +103,8 @@ const buildUserVector = ({ favorites = [], history = [], interactions = [] }) =>
   });
 
   history.forEach((item) => {
-    addMovieToVector(vector, item.movieId, SOURCE_WEIGHTS.watchHistory * getRecencyMultiplier(item.watchedAt));
+    const weight = item.status === "marked_watched" ? SOURCE_WEIGHTS.markedWatched : SOURCE_WEIGHTS.watchHistory;
+    addMovieToVector(vector, item.movieId, weight * getRecencyMultiplier(item.watchedAt));
   });
 
   interactions.forEach((item) => {
@@ -112,7 +114,7 @@ const buildUserVector = ({ favorites = [], history = [], interactions = [] }) =>
       castIds: item.metadata?.castIds || [],
       directorIds: item.metadata?.directorIds || [],
     };
-    const eventWeight = item.eventType === "favorite_add" ? 2 : SOURCE_WEIGHTS.interaction;
+    const eventWeight = item.eventType === "favorite_add" ? 2 : item.eventType === "mark_watched" ? 3 : SOURCE_WEIGHTS.interaction;
     addMovieToVector(vector, movieSignals, eventWeight * getRecencyMultiplier(item.createdAt));
   });
 
@@ -260,7 +262,10 @@ const buildTasteProfile = ({ history, favorites, interactions }) => {
   };
 
   favorites.forEach((item) => addMovieToProfile(item.movieId, SOURCE_WEIGHTS.favorite, item.createdAt, "favorite"));
-  history.forEach((item) => addMovieToProfile(item.movieId, SOURCE_WEIGHTS.watchHistory, item.watchedAt, "watchHistory"));
+  history.forEach((item) => {
+    const weight = item.status === "marked_watched" ? SOURCE_WEIGHTS.markedWatched : SOURCE_WEIGHTS.watchHistory;
+    addMovieToProfile(item.movieId, weight, item.watchedAt, "watchHistory");
+  });
 
   interactions.forEach((item) => {
     const movieSignals = item.movieId || {
@@ -268,7 +273,7 @@ const buildTasteProfile = ({ history, favorites, interactions }) => {
       castIds: item.metadata?.castIds || [],
       directorIds: item.metadata?.directorIds || [],
     };
-    const eventWeight = item.eventType === "favorite_add" ? 2 : SOURCE_WEIGHTS.interaction;
+    const eventWeight = item.eventType === "favorite_add" ? 2 : item.eventType === "mark_watched" ? 3 : SOURCE_WEIGHTS.interaction;
     addMovieToProfile(movieSignals, eventWeight, item.createdAt, "interaction");
   });
 
@@ -567,7 +572,11 @@ const generateRecommendations = async (userId) => {
         basedOnMovieIds: [...new Set(profile.sourceMovieIds.map(String))].slice(0, 8),
         collaborativeUserIds: scoreParts.collaborativeUserIds,
         favoriteBoost: favorites.length > 0 ? SOURCE_WEIGHTS.favorite : 0,
-        historyBoost: history.length > 0 ? SOURCE_WEIGHTS.watchHistory : 0,
+        historyBoost: history.some((item) => item.status === "marked_watched")
+          ? SOURCE_WEIGHTS.markedWatched
+          : history.length > 0
+            ? SOURCE_WEIGHTS.watchHistory
+            : 0,
         interactionBoost: interactions.length > 0 ? SOURCE_WEIGHTS.interaction : 0,
         peopleBoost: scoreParts.peopleScore,
         collaborativeBoost: scoreParts.collaborativeBoost,

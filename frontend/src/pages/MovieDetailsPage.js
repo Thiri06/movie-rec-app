@@ -3,7 +3,7 @@ import { signOut } from "firebase/auth";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import { auth } from "../firebase";
-import { addFavoriteMovie, recordMovieDetailView } from "../utils/apiClient";
+import { addFavoriteMovie, markMovieWatched, recordMovieDetailView } from "../utils/apiClient";
 import {
   FAVORITES_KEY,
   WATCH_HISTORY_KEY,
@@ -22,6 +22,7 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isMarkingWatched, setIsMarkingWatched] = useState(false);
 
   const tmdbRequest = useMemo(
     () => createTmdbRequest(process.env.REACT_APP_TMDB_API_KEY),
@@ -72,6 +73,23 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
       setStatusMessage(`Added "${movie.title}" to Favourites.`);
     } catch (error) {
       setStatusMessage(`Saved "${movie.title}" locally. Backend favourite failed: ${error.message}`);
+    }
+  };
+
+  const markWatched = async () => {
+    if (!movie) {
+      return;
+    }
+
+    setIsMarkingWatched(true);
+    try {
+      await markMovieWatched(movie.id, "details");
+      setStatusMessage(`Marked "${movie.title}" as watched.`);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setIsMarkingWatched(false);
     }
   };
 
@@ -211,6 +229,19 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
                   }}
                 >
                   Favourite
+                </button>
+                <button
+                  type="button"
+                  onClick={markWatched}
+                  disabled={isMarkingWatched}
+                  className="rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-70"
+                  style={{
+                    backgroundColor: colors.secondary,
+                    color: colors.text,
+                    border: `1px solid ${colors.accent}`,
+                  }}
+                >
+                  {isMarkingWatched ? "Marking..." : "Mark as Watched"}
                 </button>
               </div>
             </div>

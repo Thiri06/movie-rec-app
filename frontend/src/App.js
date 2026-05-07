@@ -3,11 +3,13 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from "react-router-d
 import { onAuthStateChanged } from "firebase/auth";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
+import DemoPage from "./pages/DemoPage";
 import DashboardPage from "./pages/DashboardPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import MovieDetailsPage from "./pages/MovieDetailsPage";
 import WatchHistoryPage from "./pages/WatchHistoryPage";
+import ErrorPage from "./pages/ErrorPage";
 import { auth } from "./firebase";
 import { syncCurrentUser } from "./utils/apiClient";
 
@@ -219,6 +221,17 @@ function App() {
           }
         />
         <Route
+          path="/demo"
+          element={
+            <DemoPage
+              colors={colors}
+              themeMode={themeMode}
+              onToggleTheme={handleToggleTheme}
+              ThemeSwitch={ThemeSwitch}
+            />
+          }
+        />
+        <Route
           path="/dashboard"
           element={
             <ProtectedRoute user={user} isAuthReady={isAuthReady}>
@@ -316,7 +329,18 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="*"
+          element={
+            <ErrorPage
+              colors={colors}
+              themeMode={themeMode}
+              onToggleTheme={handleToggleTheme}
+              ThemeSwitch={ThemeSwitch}
+              user={user}
+            />
+          }
+        />
       </Routes>
     </Router>
   );

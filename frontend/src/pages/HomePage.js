@@ -110,8 +110,8 @@ const HomePage = ({ colors, themeMode, onToggleTheme, ThemeSwitch }) => {
             >
               Sign In with Google
             </Link>
-            <a
-              href="#discovery-preview"
+            <Link
+              to="/demo"
               className="inline-flex min-h-12 items-center rounded-full px-7 py-3 text-sm font-semibold transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2"
               style={{
                 backgroundColor: `${colors.secondary}d9`,
@@ -122,7 +122,7 @@ const HomePage = ({ colors, themeMode, onToggleTheme, ThemeSwitch }) => {
               }}
             >
               Explore Demo Flow
-            </a>
+            </Link>
           </div>
 
           <p className="mt-4 text-sm" style={{ color: `${colors.text}ad` }}>

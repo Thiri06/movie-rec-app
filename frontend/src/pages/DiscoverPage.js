@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
 import { auth } from "../firebase";
+import { addFavoriteMovie } from "../utils/apiClient";
 import {
-  FAVORITES_KEY,
-  addStoredMovie,
   createTmdbRequest,
 } from "../utils/movieApi";
 
@@ -19,6 +18,10 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [discoverResults, setDiscoverResults] = useState([]);
+  const [searchPage, setSearchPage] = useState(1);
+  const [discoverPage, setDiscoverPage] = useState(1);
+  const [searchTotalPages, setSearchTotalPages] = useState(1);
+  const [discoverTotalPages, setDiscoverTotalPages] = useState(1);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState({
@@ -49,6 +52,13 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
     }
   };
 
+  const getVisiblePageNumbers = (currentPage, totalPages) => {
+    const safeTotal = Math.max(1, Math.min(totalPages || 1, 500));
+    const start = Math.max(1, Math.min(currentPage - 1, safeTotal - 2));
+
+    return Array.from({ length: Math.min(3, safeTotal) }, (_, index) => start + index);
+  };
+
   const fetchDiscoverResults = async () => {
     setLoading((previous) => ({ ...previous, discover: true }));
     try {
@@ -56,6 +66,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
         sort_by: "popularity.desc",
         "vote_average.gte": minimumRating,
         "vote_count.gte": "40",
+        page: String(discoverPage),
       };
 
       if (activeGenreId !== "all") {
@@ -67,7 +78,8 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
       }
 
       const data = await tmdbRequest("/discover/movie", params);
-      setDiscoverResults((data.results || []).slice(0, 20));
+      setDiscoverResults(data.results || []);
+      setDiscoverTotalPages(Math.max(1, Math.min(data.total_pages || 1, 500)));
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -83,7 +95,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
   useEffect(() => {
     fetchDiscoverResults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGenreId, selectedYear, minimumRating]);
+  }, [activeGenreId, selectedYear, minimumRating, discoverPage]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -94,16 +106,16 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
     const timerId = setTimeout(async () => {
       setLoading((previous) => ({ ...previous, search: true }));
       try {
-        const data = await tmdbRequest("/search/multi", {
+        const data = await tmdbRequest("/search/movie", {
           query: searchQuery,
           include_adult: "false",
+          page: String(searchPage),
           ...(selectedYear === "all" ? {} : { primary_release_year: selectedYear }),
         });
         const moviesOnly = (data.results || [])
-          .filter((item) => item.media_type === "movie" || item.title)
-          .filter((movie) => Number(movie.vote_average || 0) >= Number(minimumRating))
-          .slice(0, 12);
+          .filter((movie) => Number(movie.vote_average || 0) >= Number(minimumRating));
         setSearchResults(moviesOnly);
+        setSearchTotalPages(Math.max(1, Math.min(data.total_pages || 1, 500)));
       } catch (error) {
         setErrorMessage(error.message);
       } finally {
@@ -113,7 +125,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
     return () => clearTimeout(timerId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedYear, minimumRating]);
+  }, [searchQuery, selectedYear, minimumRating, searchPage]);
 
   const handleSignOut = async () => {
     try {
@@ -128,9 +140,36 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
     navigate(`/movies/${movie.id}`);
   };
 
-  const saveToFavorites = (movie) => {
-    addStoredMovie(FAVORITES_KEY, movie);
-    setStatusMessage(`Added "${movie.title}" to Favourites.`);
+  const updateSearchQuery = (value) => {
+    setSearchQuery(value);
+    setSearchPage(1);
+  };
+
+  const updateSelectedYear = (value) => {
+    setSelectedYear(value);
+    setSearchPage(1);
+    setDiscoverPage(1);
+  };
+
+  const updateActiveGenreId = (value) => {
+    setActiveGenreId(value);
+    setDiscoverPage(1);
+  };
+
+  const updateMinimumRating = (value) => {
+    setMinimumRating(value);
+    setSearchPage(1);
+    setDiscoverPage(1);
+  };
+
+  const saveToFavorites = async (movie) => {
+    try {
+      await addFavoriteMovie(movie.id, "discover");
+      setStatusMessage(`Added "${movie.title}" to Favourites.`);
+      setErrorMessage("");
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   };
 
   const renderMovieActions = (movie) => (
@@ -163,6 +202,19 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
   const visibleResults = searchQuery.trim() ? searchResults : discoverResults;
   const isLoadingResults = searchQuery.trim() ? loading.search : loading.discover;
+  const currentPage = searchQuery.trim() ? searchPage : discoverPage;
+  const totalPages = searchQuery.trim() ? searchTotalPages : discoverTotalPages;
+  const pageNumbers = getVisiblePageNumbers(currentPage, totalPages);
+
+  const goToPage = (page) => {
+    if (searchQuery.trim()) {
+      setSearchPage(page);
+    } else {
+      setDiscoverPage(page);
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div
@@ -230,7 +282,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
               <input
                 type="search"
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => updateSearchQuery(event.target.value)}
                 placeholder="Search movies, actors, or keywords"
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none md:text-base"
                 style={{
@@ -245,7 +297,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             <select
               value={selectedYear}
-              onChange={(event) => setSelectedYear(event.target.value)}
+              onChange={(event) => updateSelectedYear(event.target.value)}
               className="w-full rounded-2xl px-3 py-3 text-sm font-semibold outline-none md:text-base"
               style={{
                 backgroundColor: colors.background,
@@ -262,7 +314,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
             <select
               value={activeGenreId}
-              onChange={(event) => setActiveGenreId(event.target.value)}
+              onChange={(event) => updateActiveGenreId(event.target.value)}
               className="w-full rounded-2xl px-3 py-3 text-sm font-semibold outline-none md:text-base"
               style={{
                 backgroundColor: colors.background,
@@ -280,7 +332,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
             <select
               value={minimumRating}
-              onChange={(event) => setMinimumRating(event.target.value)}
+              onChange={(event) => updateMinimumRating(event.target.value)}
               className="w-full rounded-2xl px-3 py-3 text-sm font-semibold outline-none md:text-base"
               style={{
                 backgroundColor: colors.background,
@@ -316,7 +368,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
               className="rounded-full px-3 py-1 text-xs font-semibold"
               style={{ backgroundColor: `${colors.secondary}c9`, color: colors.text }}
             >
-              {visibleResults.length} result{visibleResults.length === 1 ? "" : "s"}
+              Page {currentPage} of {totalPages}
             </span>
           </div>
 
@@ -327,7 +379,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
                 <button
                   key={genre.id}
                   type="button"
-                  onClick={() => setActiveGenreId(active ? "all" : String(genre.id))}
+                  onClick={() => updateActiveGenreId(active ? "all" : String(genre.id))}
                   className="rounded-full px-3 py-1.5 text-xs font-semibold transition md:text-sm"
                   style={{
                     backgroundColor: active ? colors.primary : colors.secondary,
@@ -366,6 +418,52 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
             <p className="mt-4 text-sm" style={{ color: `${colors.text}b3` }}>
               No matching results found. Try changing your search or filters.
             </p>
+          ) : null}
+
+          {!isLoadingResults && visibleResults.length > 0 ? (
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage <= 1}
+                className="rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  backgroundColor: colors.secondary,
+                  color: colors.text,
+                  border: `1px solid ${colors.accent}`,
+                }}
+              >
+                Previous
+              </button>
+              {pageNumbers.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => goToPage(page)}
+                  className="h-10 w-10 rounded-full text-sm font-bold"
+                  style={{
+                    backgroundColor: page === currentPage ? colors.primary : colors.secondary,
+                    color: page === currentPage ? "#ffffff" : colors.text,
+                    border: `1px solid ${colors.accent}`,
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage >= totalPages}
+                className="rounded-full px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+                style={{
+                  backgroundColor: colors.secondary,
+                  color: colors.text,
+                  border: `1px solid ${colors.accent}`,
+                }}
+              >
+                Next
+              </button>
+            </div>
           ) : null}
         </section>
       </main>

@@ -86,6 +86,16 @@ export const getWatchHistory = async () => {
   return apiRequest("/history");
 };
 
+export const markMovieWatched = async (tmdbId, source = "details") => {
+  return apiRequest("/history/mark-watched", {
+    method: "POST",
+    body: JSON.stringify({
+      tmdbId: Number(tmdbId),
+      source,
+    }),
+  });
+};
+
 export const getFavoriteMovies = async () => {
   return apiRequest("/favorites");
 };
