@@ -47,7 +47,7 @@ const getTrendingMovies = async (_req, res, next) => {
 const getMovieDetails = async (req, res, next) => {
   try {
     const data = await requestTmdb(`/movie/${req.params.tmdbId}`, {
-      append_to_response: "videos,credits",
+      append_to_response: "videos,credits,recommendations,similar,release_dates",
     });
     const movie = await upsertMovieFromTmdb(data);
     let aiInsight = await AiInsight.findOne({ tmdbId: movie.tmdbId });

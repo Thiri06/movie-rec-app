@@ -1,5 +1,7 @@
 export const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+export const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";
+export const PROFILE_BASE_URL = "https://image.tmdb.org/t/p/w185";
 
 export const WATCH_HISTORY_KEY = "yoko-watch-history";
 export const FAVORITES_KEY = "yoko-favorites";
@@ -10,6 +12,22 @@ export const getPosterUrl = (posterPath) => {
   }
 
   return `${IMAGE_BASE_URL}${posterPath}`;
+};
+
+export const getBackdropUrl = (backdropPath) => {
+  if (!backdropPath) {
+    return null;
+  }
+
+  return `${BACKDROP_BASE_URL}${backdropPath}`;
+};
+
+export const getProfileUrl = (profilePath) => {
+  if (!profilePath) {
+    return null;
+  }
+
+  return `${PROFILE_BASE_URL}${profilePath}`;
 };
 
 export const formatRating = (rating) => {
@@ -26,6 +44,92 @@ export const getMovieYear = (movie) => {
   }
 
   return Number(movie.release_date.slice(0, 4));
+};
+
+export const getAgeFromBirthDate = (birthDate) => {
+  if (!birthDate) {
+    return null;
+  }
+
+  const birth = new Date(birthDate);
+  if (Number.isNaN(birth.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDelta = today.getMonth() - birth.getMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
+    age -= 1;
+  }
+
+  return age;
+};
+
+export const isUnderageProfile = (profile) => {
+  const age = getAgeFromBirthDate(profile?.preferences?.birthDate);
+  return typeof age === "number" && age < 18;
+};
+
+export const getMaxCertificationForProfile = (profile) => {
+  const age = getAgeFromBirthDate(profile?.preferences?.birthDate);
+  const maturityLimit = profile?.preferences?.maturityLimit || "auto";
+
+  if (typeof age === "number") {
+    if (age < 13) return "PG";
+    if (age < 18) return "PG-13";
+  }
+
+  if (maturityLimit === "pg13") {
+    return "PG-13";
+  }
+
+  return null;
+};
+
+export const getContentLimitLabel = (profile) => {
+  const maxCertification = getMaxCertificationForProfile(profile);
+  if (maxCertification === "PG") {
+    return "PG and below";
+  }
+
+  if (maxCertification === "PG-13") {
+    return "PG-13 and below";
+  }
+
+  return "Standard catalog";
+};
+
+export const getMovieUsCertification = (releaseDates) => {
+  const usRelease = releaseDates?.results?.find((item) => item.iso_3166_1 === "US");
+  const releaseWithCertification =
+    usRelease?.release_dates?.find((release) => release.certification) ||
+    releaseDates?.results
+      ?.flatMap((item) => item.release_dates || [])
+      .find((release) => release.certification);
+
+  return releaseWithCertification?.certification || "";
+};
+
+export const isCertificationAllowed = (certification, maxCertification) => {
+  if (!maxCertification) {
+    return true;
+  }
+
+  const ratingRank = {
+    G: 1,
+    PG: 2,
+    "PG-13": 3,
+    R: 4,
+    "NC-17": 5,
+  };
+
+  const normalizedCertification = String(certification || "").trim().toUpperCase();
+  if (!ratingRank[normalizedCertification]) {
+    return false;
+  }
+
+  return ratingRank[normalizedCertification] <= ratingRank[maxCertification];
 };
 
 export const pickTrailer = (videos) => {

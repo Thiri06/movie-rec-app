@@ -306,12 +306,12 @@ function App() {
           path="/profile"
           element={
             <ProtectedRoute user={user} isAuthReady={isAuthReady}>
-              <FeaturePlaceholder
-                title="Profile Coming Soon"
-                description="Your preferences, account details, and personalization settings will appear here."
+              <ProfilePage
                 colors={colors}
                 themeMode={themeMode}
                 onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
               />
             </ProtectedRoute>
           }

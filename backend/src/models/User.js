@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema(
       dislikedGenres: [{ type: Number }],
       preferredLanguages: [{ type: String }],
       minRating: { type: Number, default: 0 },
+      birthDate: { type: Date },
+      maturityLimit: {
+        type: String,
+        enum: ["auto", "pg13", "adult"],
+        default: "auto",
+      },
     },
     lastLoginAt: { type: Date },
   },

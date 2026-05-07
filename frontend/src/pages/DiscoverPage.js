@@ -4,9 +4,14 @@ import { useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
 import { auth } from "../firebase";
-import { addFavoriteMovie } from "../utils/apiClient";
+import { addFavoriteMovie, getCurrentUserProfile } from "../utils/apiClient";
 import {
   createTmdbRequest,
+  getContentLimitLabel,
+  getMaxCertificationForProfile,
+  getMovieUsCertification,
+  isCertificationAllowed,
+  isUnderageProfile,
 } from "../utils/movieApi";
 
 const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) => {
@@ -22,6 +27,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
   const [discoverPage, setDiscoverPage] = useState(1);
   const [searchTotalPages, setSearchTotalPages] = useState(1);
   const [discoverTotalPages, setDiscoverTotalPages] = useState(1);
+  const [profile, setProfile] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState({
@@ -39,6 +45,36 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
     const now = new Date().getFullYear();
     return ["all", ...Array.from({ length: 40 }, (_, index) => String(now - index))];
   }, []);
+  const isUnderage = isUnderageProfile(profile);
+  const shouldUseFamilyFilter = isUnderage || profile?.preferences?.maturityLimit === "pg13";
+  const contentLimitLabel = getContentLimitLabel(profile);
+  const maxCertification = getMaxCertificationForProfile(profile);
+
+  const filterMoviesForProfile = async (movies) => {
+    const baseFiltered = (movies || [])
+      .filter((movie) => !movie.adult)
+      .filter((movie) => Number(movie.vote_average || 0) >= Number(minimumRating));
+
+    if (!maxCertification) {
+      return baseFiltered;
+    }
+
+    const checkedMovies = await Promise.all(
+      baseFiltered.map(async (movie) => {
+        try {
+          const details = await tmdbRequest(`/movie/${movie.id}`, {
+            append_to_response: "release_dates",
+          });
+          const certification = getMovieUsCertification(details.release_dates);
+          return isCertificationAllowed(certification, maxCertification) ? movie : null;
+        } catch (_error) {
+          return null;
+        }
+      })
+    );
+
+    return checkedMovies.filter(Boolean);
+  };
 
   const fetchGenres = async () => {
     setLoading((previous) => ({ ...previous, genres: true }));
@@ -64,10 +100,16 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
     try {
       const params = {
         sort_by: "popularity.desc",
+        include_adult: "false",
         "vote_average.gte": minimumRating,
         "vote_count.gte": "40",
         page: String(discoverPage),
       };
+
+      if (shouldUseFamilyFilter) {
+        params.certification_country = "US";
+        params["certification.lte"] = maxCertification || "PG-13";
+      }
 
       if (activeGenreId !== "all") {
         params.with_genres = String(activeGenreId);
@@ -78,7 +120,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
       }
 
       const data = await tmdbRequest("/discover/movie", params);
-      setDiscoverResults(data.results || []);
+      setDiscoverResults(await filterMoviesForProfile(data.results || []));
       setDiscoverTotalPages(Math.max(1, Math.min(data.total_pages || 1, 500)));
     } catch (error) {
       setErrorMessage(error.message);
@@ -89,13 +131,18 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
   useEffect(() => {
     fetchGenres();
+    getCurrentUserProfile()
+      .then(setProfile)
+      .catch((error) => {
+        console.error("Profile safety settings failed:", error);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchDiscoverResults();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGenreId, selectedYear, minimumRating, discoverPage]);
+  }, [activeGenreId, selectedYear, minimumRating, discoverPage, shouldUseFamilyFilter, maxCertification]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -112,8 +159,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
           page: String(searchPage),
           ...(selectedYear === "all" ? {} : { primary_release_year: selectedYear }),
         });
-        const moviesOnly = (data.results || [])
-          .filter((movie) => Number(movie.vote_average || 0) >= Number(minimumRating));
+        const moviesOnly = await filterMoviesForProfile(data.results || []);
         setSearchResults(moviesOnly);
         setSearchTotalPages(Math.max(1, Math.min(data.total_pages || 1, 500)));
       } catch (error) {
@@ -125,7 +171,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
 
     return () => clearTimeout(timerId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, selectedYear, minimumRating, searchPage]);
+  }, [searchQuery, selectedYear, minimumRating, searchPage, maxCertification]);
 
   const handleSignOut = async () => {
     try {
@@ -262,14 +308,25 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
         ) : null}
 
         <section
-          className="yoko-fade-up rounded-3xl p-5 md:p-6"
+          className="yoko-fade-up relative rounded-3xl p-5 pt-16 md:p-6 md:pt-16 lg:pt-6"
           style={{
             border: `1px solid ${colors.secondary}`,
             background: `linear-gradient(120deg, ${colors.secondary}90, ${colors.background})`,
           }}
         >
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+          <span
+            className="absolute right-5 top-5 rounded-full px-3 py-1.5 text-xs font-semibold md:right-6 md:top-6"
+            style={{
+              backgroundColor: shouldUseFamilyFilter ? `${colors.primary}22` : `${colors.secondary}c9`,
+              color: shouldUseFamilyFilter ? colors.primary : colors.text,
+              border: `1px solid ${shouldUseFamilyFilter ? colors.primary : colors.accent}`,
+            }}
+          >
+            Content: {contentLimitLabel}
+          </span>
+
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] lg:items-end">
+            <div className="min-w-0">
               <p className="text-sm font-semibold uppercase tracking-[0.18em]" style={{ color: colors.accent }}>
                 Search & Exploration Hub
               </p>
@@ -278,7 +335,7 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
                 Use TMDb search and filters here. Viewing details records interaction signals in the background.
               </p>
             </div>
-            <div className="w-full lg:max-w-xl">
+            <div className="w-full">
               <input
                 type="search"
                 value={searchQuery}

@@ -6,8 +6,8 @@ const DashboardNav = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user, onL
     { label: "Dashboard", to: "/dashboard" },
     { label: "Discover", to: "/discover" },
     { label: "Watch History", to: "/history" },
-    { label: "Profile", to: "/profile" },
     { label: "Favorites", to: "/favorites" },
+    { label: "Profile", to: "/profile" },
   ];
 
   return (
