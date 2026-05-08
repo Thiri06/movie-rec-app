@@ -20,7 +20,7 @@ const configuredClientOrigins = (process.env.CLIENT_ORIGIN || "")
 const allowedClientOrigins =
   configuredClientOrigins.length > 0
     ? configuredClientOrigins
-    : ["http://localhost:3000", "http://localhost:3001"];
+    : ["http://localhost:3000", "http://localhost:3001", "https://thiri06.github.io"];
 
 app.use(
   cors({

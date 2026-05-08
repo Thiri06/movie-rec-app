@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="YOKO">
+  <rect width="64" height="64" rx="14" fill="#05010f"/>
+  <path d="M15 14h9l8 15 8-15h9L36 37v13h-8V37L15 14z" fill="#6d5dfc"/>
+  <circle cx="47" cy="18" r="6" fill="#18d4c4"/>
+  <circle cx="47" cy="18" r="2" fill="#05010f"/>
+</svg>

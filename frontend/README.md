@@ -24,6 +24,14 @@ npm install
 npm run deploy
 ```
 
+Before deploying, set `REACT_APP_API_BASE_URL` in `frontend/.env` to your deployed backend URL, for example:
+
+```text
+REACT_APP_API_BASE_URL=https://your-backend-domain.com/api
+```
+
+Do not deploy with `REACT_APP_API_BASE_URL=http://localhost:5000/api`; visitors' browsers would try to call their own computer instead of your backend. The backend also needs `CLIENT_ORIGIN=https://thiri06.github.io` so GitHub Pages is allowed by CORS.
+
 Then in GitHub, open the repository settings:
 
 1. Go to `Settings` -> `Pages`.
