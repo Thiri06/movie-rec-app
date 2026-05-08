@@ -13,10 +13,25 @@ const userRoutes = require("./src/routes/userRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const configuredClientOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowedClientOrigins =
+  configuredClientOrigins.length > 0
+    ? configuredClientOrigins
+    : ["http://localhost:3000", "http://localhost:3001"];
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+    origin(origin, callback) {
+      if (!origin || allowedClientOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked request from ${origin}`));
+    },
   })
 );
 app.use(express.json());
