@@ -1,0 +1,711 @@
+MOVIE-REC-APP FUNCTIONALITIES AND WEB PAGES
+Project Name: YOKO Movie Intelligence
+Generated From: Current React frontend and Express backend source code
+
+1. APPLICATION OVERVIEW
+
+YOKO Movie Intelligence is a movie recommendation web application that helps users discover movies, view detailed movie information, save favourites, track watch history, and receive personalized recommendations.
+
+The system uses:
+- React for the frontend user interface.
+- React Router for page routing.
+- Firebase Authentication for user login.
+- Express.js for the backend API.
+- MongoDB with Mongoose for persistent data storage.
+- TMDb API for movie search, discovery, details, images, trailers, cast, crew, recommendations, and similar movies.
+- Gemini AI for spoiler-free movie insight summaries when configured.
+
+2. FRONTEND WEB PAGES
+
+2.1 Home Page
+Route: /
+File: frontend/src/pages/HomePage.js
+Access: Public
+
+Main functionalities:
+- Displays the YOKO Movie Intelligence landing experience.
+- Introduces personalized movie discovery.
+- Shows feature highlights such as live TMDb search, hybrid recommendations, and responsive design.
+- Provides navigation to Login and Demo Flow.
+- Displays a recommendation confidence preview.
+- Includes a light/dark theme switch.
+- Shows TMDb and Gemini AI credit text.
+
+2.2 Login Page
+Route: /login
+File: frontend/src/pages/LoginPage.js
+Access: Public only; authenticated users are redirected to /dashboard.
+
+Main functionalities:
+- Allows sign in using Firebase email/password authentication.
+- Allows sign in using Firebase Google popup authentication.
+- Redirects successful login users to the Dashboard.
+- Displays validation errors for empty email/password fields.
+- Displays Firebase login errors.
+- Generates a suggested strong password.
+- Shows password strength feedback with four strength bars.
+- Allows filling the password field with the suggested password.
+- Provides a Back to Home link.
+- Includes a light/dark theme switch.
+
+2.3 Demo Page
+Route: /demo
+File: frontend/src/pages/DemoPage.js
+Access: Public
+
+Main functionalities:
+- Shows a read-only walkthrough of the YOKO recommendation flow.
+- Explains discovery, detail viewing, recommendation generation, and profile strengthening.
+- Demonstrates how favorites, watch history, matched actors, matched directors, and similar-user signals contribute to recommendations.
+- Provides links to Sign In and Back Home.
+- Includes a light/dark theme switch.
+
+2.4 Dashboard Page
+Route: /dashboard
+File: frontend/src/pages/DashboardPage.js
+Access: Protected; unauthenticated users are redirected to /login.
+
+Main functionalities:
+- Acts as the main personalization hub after login.
+- Loads user watch history from the backend.
+- Loads user favorites from the backend.
+- Loads backend-generated recommendations.
+- Allows refreshing recommendations through the Sync Signals button.
+- Fetches TMDb movie genres.
+- Fetches weekly trending movies from TMDb.
+- Fetches popular movie trailers from TMDb and opens trailers on YouTube.
+- Displays a horizontal Popular Movie Trailers carousel with left/right scroll buttons.
+- Displays personalized recommendations with explanation text when available.
+- Displays recommendation context such as based-on genre, watched movie, favorited movie, history count, and favorite count.
+- Displays Trending This Week movies.
+- Allows opening movie details from recommendation and trending cards.
+- Allows refreshing trailers and trending movies.
+- Shows loading skeletons while data is loading.
+- Shows API error messages.
+- Shows TMDb credit footer.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.5 Discover Page
+Route: /discover
+File: frontend/src/pages/DiscoverPage.js
+Access: Protected
+
+Main functionalities:
+- Provides the main search and movie exploration page.
+- Fetches TMDb movie genres.
+- Loads the current user profile to apply content safety rules.
+- Supports live movie search through TMDb search/movie.
+- Supports general movie discovery through TMDb discover/movie.
+- Filters movies by:
+  - Search query.
+  - Genre.
+  - Release year.
+  - Minimum rating.
+- Displays selectable genre chips.
+- Supports pagination with Previous, Next, and visible page number buttons.
+- Limits TMDb pagination to a maximum of 500 pages.
+- Excludes adult movies.
+- Applies profile-based certification filtering:
+  - Under 13 users are limited to PG and below.
+  - Under 18 users are limited to PG-13 and below.
+  - Users with PG-13 preference are limited to PG-13 and below.
+  - Standard catalog is available when no maturity restriction applies.
+- Displays the active content limit label.
+- Allows adding a movie to Favourites from discovery results.
+- Allows opening the Movie Details page.
+- Shows status messages when a movie is added to favourites.
+- Shows errors and loading skeletons.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.6 Movie Details Page
+Route: /movies/:movieId
+File: frontend/src/pages/MovieDetailsPage.js
+Access: Protected
+
+Main functionalities:
+- Displays detailed TMDb information for a selected movie.
+- Loads movie details from backend endpoint /api/movies/:tmdbId.
+- Fetches and displays:
+  - Poster.
+  - Backdrop.
+  - Title.
+  - Tagline.
+  - Overview.
+  - Genres.
+  - Rating.
+  - Certification.
+  - Release year.
+  - Runtime.
+  - Release date.
+  - Status.
+  - Spoken languages.
+  - Vote count.
+  - Popularity.
+  - Director.
+  - Writer.
+  - Producer.
+  - Budget.
+  - Revenue.
+  - Production countries.
+  - Production companies.
+  - Top cast.
+  - Trailer.
+  - TMDb direct recommendations.
+  - Similar movies.
+- Displays a spoiler-free "Why Watch" AI insight when Gemini is configured.
+- Displays Gemini configuration or error fallback text when AI insight is unavailable.
+- Embeds a YouTube trailer when available.
+- Provides a Watch Trailer external link.
+- Allows adding the movie to Favourites.
+- Allows marking the movie as watched.
+- Automatically records a detail view as a watch-history/interaction signal.
+- Saves viewed movie data locally in browser localStorage as a fallback watch-history cache.
+- Saves favorite movie data locally in browser localStorage when favorited.
+- Allows opening recommended or similar movies.
+- Provides Back to Discover link.
+- Shows loading skeleton, status messages, and errors.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.7 Watch History Page
+Route: /history
+File: frontend/src/pages/WatchHistoryPage.js
+Access: Protected
+
+Main functionalities:
+- Displays movies the user has viewed or marked as watched.
+- Loads watch history from the backend.
+- Shows the number of history items.
+- Displays recently viewed movies as movie cards.
+- Shows viewed date/time for each history item.
+- Allows opening Movie Details from a history card.
+- Provides a Refresh button.
+- Shows empty-state message and Explore Movies link when no history exists.
+- Shows loading skeletons and API errors.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.8 Favourites Page
+Route: /favorites
+File: frontend/src/pages/FavoritesPage.js
+Access: Protected
+
+Main functionalities:
+- Displays movies intentionally saved by the user.
+- Loads favorite movies from the backend.
+- Shows the number of favorite items.
+- Allows opening Movie Details from a favorite movie card.
+- Allows removing a movie from Favourites.
+- Provides a Refresh button.
+- Shows a status message after removing a favorite.
+- Shows empty-state message and Find Movies link when no favourites exist.
+- Shows loading skeletons and API errors.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.9 Profile Page
+Route: /profile
+File: frontend/src/pages/ProfilePage.js
+Access: Protected
+
+Main functionalities:
+- Displays synced Firebase/MongoDB user profile information.
+- Shows profile photo or generated initial avatar.
+- Shows user name and email.
+- Shows last login and profile update dates.
+- Allows editing recommendation preferences:
+  - Favorite genres.
+  - Disliked genres.
+  - Preferred languages.
+  - Minimum rating.
+  - Date of birth.
+  - Maturity limit.
+- Supports maturity options:
+  - Auto by Age.
+  - PG-13 and Below.
+  - Standard Catalog.
+- Prevents under-18 users from selecting the adult/standard catalog option.
+- Calculates age from date of birth.
+- Displays content safety mode.
+- Displays preference metrics:
+  - Number of favorite genres.
+  - Number of preferred languages.
+  - Minimum rating.
+  - Safety mode.
+- Saves profile preferences to the backend.
+- Removes disliked genres that are also selected as favorite genres before saving.
+- Shows save status and error messages.
+- Includes dashboard navigation, logout, and theme switching.
+
+2.10 Error Page
+Route: *
+File: frontend/src/pages/ErrorPage.js
+Access: Public fallback
+
+Main functionalities:
+- Displays a 404/API error-style fallback for unavailable routes.
+- Sends logged-in users back to Dashboard or Discover.
+- Sends guests back to Home or Login.
+- Includes a light/dark theme switch.
+
+3. SHARED FRONTEND FUNCTIONALITIES
+
+3.1 Authentication and Route Protection
+Files:
+- frontend/src/App.js
+- frontend/src/firebase.js
+- frontend/src/utils/apiClient.js
+
+Functionalities:
+- Uses Firebase auth state listener to detect the current user.
+- Shows "Checking your session..." while auth state is loading.
+- Protects Dashboard, Discover, Movie Details, Watch History, Favourites, and Profile routes.
+- Redirects unauthenticated users to /login.
+- Redirects authenticated users away from /login to /dashboard.
+- Syncs authenticated users to the backend using /api/users/sync.
+- Sends Firebase ID token in Authorization header for backend API requests.
+- Sends development fallback identity headers for local backend use.
+
+3.2 Dashboard Navigation
+File: frontend/src/components/DashboardNav.js
+
+Functionalities:
+- Shows app branding and signed-in user display name/email.
+- Provides links to:
+  - Dashboard.
+  - Discover.
+  - Watch History.
+  - Favourites.
+  - Profile.
+- Highlights the active route.
+- Provides Logout button.
+- Provides theme switch.
+
+3.3 Movie Cards
+File: frontend/src/components/MovieCard.js
+
+Functionalities:
+- Reusable movie card component used across dashboard, discover, details rails, history, and favourites.
+- Displays movie poster, title, release year/rating information, and optional page-specific actions.
+- Supports selecting/opening movie details.
+
+3.4 Theme System
+File: frontend/src/App.js
+
+Functionalities:
+- Supports light and dark modes.
+- Stores selected theme in localStorage using key yoko-theme.
+- Applies color scheme to the document.
+- Provides reusable ThemeSwitch control.
+
+3.5 TMDb Frontend Utilities
+File: frontend/src/utils/movieApi.js
+
+Functionalities:
+- Builds TMDb API requests using REACT_APP_TMDB_API_KEY.
+- Provides poster, backdrop, and profile image URLs.
+- Formats ratings.
+- Calculates movie release year.
+- Calculates age from birth date.
+- Determines whether a user is underage.
+- Determines maximum allowed movie certification for a profile.
+- Creates human-readable content limit labels.
+- Reads TMDb release certification data.
+- Checks whether a certification is allowed.
+- Selects the best YouTube trailer from TMDb videos.
+- Reads and writes local watch history and favorite movie caches.
+- Finds top genre from a list of movies.
+
+4. BACKEND API FUNCTIONALITIES
+
+4.1 Server and Core API
+File: backend/server.js
+
+Functionalities:
+- Starts an Express API server.
+- Connects to MongoDB.
+- Enables CORS for the frontend origin.
+- Parses JSON requests.
+- Provides root status endpoint.
+- Provides health check endpoint.
+- Mounts user, movie, interaction, history, favorite, and recommendation routes.
+- Provides not-found and centralized error handling.
+
+Endpoints:
+- GET /
+- GET /api/health
+
+4.2 User API
+Files:
+- backend/src/routes/userRoutes.js
+- backend/src/controllers/userController.js
+- backend/src/models/User.js
+
+Endpoints:
+- POST /api/users/sync
+- GET /api/users/me
+- PATCH /api/users/preferences
+
+Functionalities:
+- Creates or updates a MongoDB user profile from Firebase identity.
+- Stores firebaseUid, name, email, photoURL, and lastLoginAt.
+- Retrieves the current user profile.
+- Updates user preferences.
+- Sanitizes preferences before saving.
+- Stores favorite genres, disliked genres, preferred languages, minimum rating, birth date, and maturity limit.
+- Clamps minimum rating between 0 and 9.
+- Prevents users under 18 from saving the adult maturity limit.
+
+4.3 Movie API
+Files:
+- backend/src/routes/movieRoutes.js
+- backend/src/controllers/movieController.js
+- backend/src/services/tmdbService.js
+- backend/src/services/movieService.js
+- backend/src/models/Movie.js
+- backend/src/models/AiInsight.js
+
+Endpoints:
+- GET /api/movies/search
+- GET /api/movies/discover
+- GET /api/movies/trending
+- GET /api/movies/:tmdbId
+
+Functionalities:
+- Searches movies through TMDb.
+- Discovers movies through TMDb filters.
+- Gets weekly trending movies from TMDb.
+- Gets detailed movie information from TMDb.
+- Requests appended TMDb data for videos, credits, recommendations, similar movies, and release dates.
+- Upserts TMDb movie data into MongoDB.
+- Stores movie metadata such as genres, cast, directors, release data, rating, popularity, poster, backdrop, trailer key, runtime, and language.
+- Generates and caches Gemini AI movie insight when GEMINI_API_KEY is configured.
+- Returns AI insight availability, configuration status, and generation errors.
+
+4.4 Interaction API
+Files:
+- backend/src/routes/interactionRoutes.js
+- backend/src/controllers/interactionController.js
+- backend/src/models/UserInteraction.js
+
+Endpoint:
+- POST /api/interactions
+
+Functionalities:
+- Records user interaction events for a movie.
+- Supports default event type view_details.
+- Stores event source and metadata.
+- Fetches movie details from TMDb and upserts the movie before saving interaction.
+- Stores genre, cast, and director signals with the interaction.
+- Automatically creates or updates watch history when event type is view_details.
+
+4.5 Watch History API
+Files:
+- backend/src/routes/historyRoutes.js
+- backend/src/controllers/historyController.js
+- backend/src/models/WatchHistory.js
+
+Endpoints:
+- GET /api/history
+- POST /api/history/mark-watched
+
+Functionalities:
+- Retrieves authenticated user's watch history sorted by newest first.
+- Populates each history item with movie information.
+- Allows explicitly marking a movie as watched.
+- Fetches and upserts movie details before saving watch history.
+- Stores status, source, and watchedAt timestamp.
+- Records a mark_watched interaction signal with genre, cast, and director metadata.
+
+4.6 Favourites API
+Files:
+- backend/src/routes/favoriteRoutes.js
+- backend/src/controllers/favoriteController.js
+- backend/src/models/Favorite.js
+
+Endpoints:
+- GET /api/favorites
+- POST /api/favorites
+- DELETE /api/favorites/:tmdbId
+
+Functionalities:
+- Retrieves authenticated user's favorite movies sorted by newest first.
+- Adds a movie to favorites.
+- Fetches and upserts movie details before saving favorite.
+- Prevents duplicate favorite records by user and tmdbId.
+- Records favorite_add interaction signal.
+- Removes a favorite movie.
+
+4.7 Recommendation API
+Files:
+- backend/src/routes/recommendationRoutes.js
+- backend/src/controllers/recommendationController.js
+- backend/src/services/recommendationService.js
+- backend/src/models/Recommendation.js
+
+Endpoint:
+- GET /api/recommendations
+
+Functionalities:
+- Retrieves stored recommendations for the authenticated user.
+- Sorts recommendations by score.
+- Limits recommendations to 12 returned records.
+- Generates new recommendations when none exist or when refresh=true is passed.
+- Stores generated recommendations with score, algorithm, reason, explanation details, explanation tags, signal details, generatedAt, and expiresAt.
+
+5. RECOMMENDATION SYSTEM FUNCTIONALITIES
+
+Algorithm Type:
+- Hybrid recommendation system.
+
+Signals used:
+- Favorites.
+- Watch history.
+- Explicit mark-watched records.
+- User interactions such as detail views.
+- Genres.
+- Cast.
+- Directors.
+- Similar-user collaborative signals.
+- Movie quality signals from rating and popularity.
+- Recency of user activity.
+
+Recommendation behavior:
+- Favorites receive stronger weight than passive views.
+- Marked-watched movies receive stronger weight than normal watch-history views.
+- Recent signals receive higher weight than old signals.
+- User taste vectors are built from movie, genre, cast, and director data.
+- Similar users are found through overlapping favorites, history, and interactions.
+- Collaborative candidates are gathered from similar users' favorites, history, and interactions.
+- Content-based candidates are gathered from TMDb using the user's top genres.
+- Already-seen and already-favorited movies are excluded.
+- Candidate movies are scored using content match, people match, collaborative boost, and quality.
+- Human-readable explanations are generated, such as:
+  - Because you favorited a related movie.
+  - Shares actors you like.
+  - Matches directors you like.
+  - Users with similar taste also saved or watched this movie.
+
+6. DATA STORED IN MONGODB
+
+User:
+- Firebase UID.
+- Name.
+- Email.
+- Photo URL.
+- Preferences.
+- Last login date.
+- Created and updated timestamps.
+
+Movie:
+- TMDb ID.
+- Title and original title.
+- Overview.
+- Genres and genre IDs.
+- Cast and cast IDs.
+- Directors and director IDs.
+- Release date and release year.
+- Vote average and vote count.
+- Popularity.
+- Poster path and backdrop path.
+- Trailer key.
+- Runtime.
+- Language.
+- Cache timestamp.
+
+Favorite:
+- User reference.
+- Movie reference.
+- TMDb ID.
+- Created timestamp.
+
+WatchHistory:
+- User reference.
+- Movie reference.
+- TMDb ID.
+- Status.
+- Source.
+- Watched timestamp.
+
+UserInteraction:
+- User reference.
+- Movie reference.
+- TMDb ID.
+- Event type.
+- Source.
+- Metadata containing genre, cast, and director signals.
+- Created timestamp.
+
+Recommendation:
+- User reference.
+- Movie reference.
+- TMDb ID.
+- Score.
+- Algorithm name.
+- Reason.
+- Human explanation.
+- Explanation details.
+- Explanation tags.
+- Recommendation signal data.
+- Generated timestamp.
+- Expiry timestamp.
+
+AiInsight:
+- Movie reference.
+- TMDb ID.
+- AI-generated summary.
+- Mood tags.
+- Model name.
+- Generated timestamp.
+
+TmdbCache:
+- Stores cached TMDb API responses by endpoint and request parameters.
+- Stores cached data and expiry time to reduce repeated TMDb requests.
+
+7. EXTERNAL INTEGRATIONS
+
+Firebase Authentication:
+- Email/password login.
+- Google login.
+- ID token based backend authentication.
+- Development fallback headers when Firebase Admin is not configured in non-production.
+
+TMDb API:
+- Movie search.
+- Movie discovery.
+- Trending movies.
+- Movie details.
+- Genres.
+- Videos/trailers.
+- Credits.
+- Recommendations.
+- Similar movies.
+- Release dates/certifications.
+- Posters, backdrops, and profile images.
+
+Gemini AI:
+- Generates spoiler-free movie pitch summaries.
+- Generates mood tags.
+- Uses configured GEMINI_MODEL, defaulting to gemini-2.5-flash with gemini-2.0-flash fallback.
+- Requires GEMINI_API_KEY.
+
+YouTube:
+- Opens and embeds movie trailers using TMDb YouTube video keys.
+
+8. SECURITY AND ACCESS CONTROL
+
+Functionalities:
+- Protected backend routes require Firebase ID token.
+- Protected frontend pages require authenticated Firebase user.
+- Backend validates missing or invalid auth tokens.
+- User-specific records are loaded by authenticated firebaseUid.
+- Profile maturity settings are sanitized on the backend.
+- Under-18 users cannot save adult maturity mode.
+- Discover excludes adult TMDb content for all users.
+- Discover applies PG/PG-13 filters where required by profile age or settings.
+
+9. LOCAL STORAGE FUNCTIONALITIES
+
+Stored keys:
+- yoko-theme
+- yoko-watch-history
+- yoko-favorites
+
+Functionalities:
+- Persists selected theme mode.
+- Stores compact local watch history fallback.
+- Stores compact local favorites fallback.
+- Limits locally stored movie lists to 40 items.
+
+10. USER WORKFLOWS
+
+10.1 Guest Workflow
+- Visit Home page.
+- Open Demo page to understand the app.
+- Go to Login.
+- Sign in with email/password or Google.
+
+10.2 New Authenticated User Workflow
+- User logs in.
+- App syncs Firebase user to MongoDB.
+- User opens Profile and saves taste preferences.
+- User searches or discovers movies.
+- User views movie details.
+- Detail views are recorded as watch history and interaction signals.
+- User favorites movies or marks movies watched.
+- User returns to Dashboard and syncs signals to get recommendations.
+
+10.3 Recommendation Workflow
+- User activity is collected through favorites, watch history, marked-watched records, and interactions.
+- Backend builds a weighted taste profile.
+- Backend collects content-based candidates from TMDb.
+- Backend collects collaborative candidates from similar users.
+- Backend scores candidates.
+- Backend saves top recommendations.
+- Dashboard displays recommendations with explanations.
+
+10.4 Content Safety Workflow
+- User enters birth date and maturity setting in Profile.
+- App calculates age and content limit.
+- Discover filters content based on profile safety mode.
+- Underage users are automatically restricted.
+
+11. RESPONSIVE AND UI FUNCTIONALITIES
+
+Functionalities:
+- Responsive layout for desktop, tablet, and mobile.
+- Sticky authenticated dashboard navigation.
+- Active navigation highlighting.
+- Loading skeleton states.
+- Error and status message banners.
+- Movie grids and horizontal trailer carousel.
+- Theme-aware colors across pages.
+- TMDb branding credit in Dashboard footer.
+
+12. DEPLOYMENT AND RUN SCRIPTS
+
+Frontend:
+- npm start: starts React development server.
+- npm run build: creates production build.
+- npm run deploy: deploys build to GitHub Pages.
+- postbuild copies 404 support for GitHub Pages routing.
+
+Backend:
+- npm start: starts Express server.
+- npm run dev: starts backend with nodemon.
+
+13. ENVIRONMENT VARIABLES USED
+
+Frontend:
+- REACT_APP_TMDB_API_KEY
+- REACT_APP_API_BASE_URL
+- PUBLIC_URL
+
+Backend:
+- PORT
+- CLIENT_ORIGIN
+- MONGO_URI
+- FIREBASE_SERVICE_ACCOUNT
+- FIREBASE_PROJECT_ID
+- FIREBASE_CLIENT_EMAIL
+- FIREBASE_PRIVATE_KEY
+- TMDB_API_KEY
+- GEMINI_API_KEY
+- GEMINI_MODEL
+- NODE_ENV
+
+14. SUMMARY OF ALL WEB ROUTES
+
+Public routes:
+- / : Home Page
+- /login : Login Page
+- /demo : Demo Page
+- * : Error Page
+
+Protected routes:
+- /dashboard : Dashboard Page
+- /discover : Discover Page
+- /movies/:movieId : Movie Details Page
+- /history : Watch History Page
+- /favorites : Favourites Page
+- /profile : Profile Page
+
+Commented or not currently active:
+- /recommendations : A placeholder route exists in App.js but is commented out.

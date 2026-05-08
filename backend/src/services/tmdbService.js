@@ -32,9 +32,26 @@ const requestTmdb = async (endpoint, params = {}, options = {}) => {
     ...params,
   });
 
-  const response = await fetch(`${TMDB_BASE_URL}${endpoint}?${queryParams.toString()}`);
+  let response;
+  try {
+    response = await fetch(`${TMDB_BASE_URL}${endpoint}?${queryParams.toString()}`);
+  } catch (error) {
+    if (cached?.data) {
+      console.warn(`TMDb fetch failed for ${endpoint}. Serving stale cached data.`, error.message);
+      return cached.data;
+    }
+
+    throw new Error(
+      `Unable to reach TMDb right now. Check your internet connection or TMDb API access. Original error: ${error.message}`
+    );
+  }
 
   if (!response.ok) {
+    if (cached?.data) {
+      console.warn(`TMDb returned ${response.status} for ${endpoint}. Serving stale cached data.`);
+      return cached.data;
+    }
+
     throw new Error(`TMDB request failed with status ${response.status}`);
   }
 

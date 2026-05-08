@@ -1,4 +1,5 @@
 const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const INSIGHT_VERSION = 2;
 
 const parseGeminiJson = (text) => {
   if (!text) {
@@ -24,11 +25,11 @@ const buildPrompt = (movie) => {
   const cast = (movie.cast || []).slice(0, 6).map((person) => person.name).filter(Boolean).join(", ") || "Unknown";
 
   return `
-Create a vivid, spoiler-free movie pitch for a movie recommendation app.
+Create a spoiler-free "Why Watch" recommendation for a movie app.
 
-Your goal is to make the user curious enough to press play.
-Write with cinematic energy, emotional pull, and specific atmosphere.
-Sound like an enthusiastic human curator, not a database summary.
+Your goal is not to retell the plot. Explain why this movie is worth a user's time.
+Focus on viewing value: emotional payoff, visual style, genre appeal, pacing, performances, director/cast draw, atmosphere, originality, rewatchability, or who would especially enjoy it.
+Sound like an observant human curator making a recommendation, not a database summary or synopsis.
 
 Avoid flat phrases such as:
 - faces challenges
@@ -41,12 +42,18 @@ Avoid flat phrases such as:
 
 Do not reveal twists, endings, or major spoilers.
 Do not exaggerate beyond the movie facts.
-Mention what makes the movie feel worth watching: tension, humor, stakes, relationships, style, pace, setting, or mood.
+Avoid summarizing the setup unless it directly supports a recommendation reason.
 
 Return only valid JSON with this shape:
 {
-  "summary": "2-3 engaging sentences that feel like a compelling recommendation blurb, no spoilers, no markdown",
-  "moodTags": ["punchy mood tag", "punchy mood tag", "punchy mood tag"]
+  "summary": "1 sentence that directly states the main reason to watch, no spoilers, no markdown",
+  "reasons": [
+    "specific reason 1, focused on craft, emotion, style, performance, or audience appeal",
+    "specific reason 2, not a plot beat",
+    "specific reason 3, not a plot beat"
+  ],
+  "bestFor": "short audience fit, such as 'Best for viewers who want ...'",
+  "moodTags": ["punchy appeal tag", "punchy appeal tag", "punchy appeal tag"]
 }
 
 Movie:
@@ -100,10 +107,15 @@ const requestGeminiInsight = async (movie, model) => {
 
   return {
     summary: String(parsed.summary).slice(0, 900),
+    reasons: Array.isArray(parsed.reasons)
+      ? parsed.reasons.map((reason) => String(reason).trim()).filter(Boolean).slice(0, 3)
+      : [],
+    bestFor: parsed.bestFor ? String(parsed.bestFor).trim().slice(0, 220) : "",
     moodTags: Array.isArray(parsed.moodTags)
       ? parsed.moodTags.map((tag) => String(tag).trim()).filter(Boolean).slice(0, 5)
       : [],
     generatedBy: model,
+    insightVersion: INSIGHT_VERSION,
   };
 };
 
@@ -135,5 +147,6 @@ const generateMovieInsight = async (movie) => {
 };
 
 module.exports = {
+  INSIGHT_VERSION,
   generateMovieInsight,
 };

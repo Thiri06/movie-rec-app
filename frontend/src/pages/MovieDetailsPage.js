@@ -415,14 +415,49 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
                     </span>
                   }
                 >
-                  <p className="text-sm leading-relaxed md:text-base" style={{ color: `${colors.text}d0` }}>
-                    {aiInsight?.summary ||
-                      (aiInsightConfigured
+                  {aiInsight ? (
+                    <div className="grid gap-4">
+                      <p className="text-sm font-semibold leading-relaxed md:text-base" style={{ color: `${colors.text}e0` }}>
+                        {aiInsight.summary}
+                      </p>
+
+                      {aiInsight.reasons?.length > 0 ? (
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {aiInsight.reasons.map((reason, index) => (
+                            <div
+                              key={reason}
+                              className="rounded-2xl p-4"
+                              style={{
+                                backgroundColor: `${colors.secondary}66`,
+                                border: `1px solid ${colors.text}12`,
+                              }}
+                            >
+                              <p className="text-xs font-bold uppercase" style={{ color: colors.primary }}>
+                                Reason {index + 1}
+                              </p>
+                              <p className="mt-2 text-sm leading-relaxed" style={{ color: `${colors.text}d0` }}>
+                                {reason}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {aiInsight.bestFor ? (
+                        <p className="text-sm font-semibold leading-relaxed" style={{ color: `${colors.text}bf` }}>
+                          {aiInsight.bestFor}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-relaxed md:text-base" style={{ color: `${colors.text}d0` }}>
+                      {aiInsightConfigured
                         ? aiInsightError
-                          ? "Gemini is configured, but the request failed. Try refreshing in a moment or switch GEMINI_MODEL to a model with available quota."
-                          : "The AI description could not be generated for this movie yet."
-                        : "Add GEMINI_API_KEY to the backend environment to generate spoiler-free AI descriptions.")}
-                  </p>
+                          ? "Gemini is configured, but the request failed. The app can still show movie details; try refreshing later to generate watch-specific reasons."
+                          : "Watch-specific AI reasons could not be generated for this movie yet."
+                        : "Add GEMINI_API_KEY to the backend environment to generate spoiler-free watch reasons."}
+                    </p>
+                  )}
                   {aiInsight?.moodTags?.length > 0 ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {aiInsight.moodTags.map((tag) => (

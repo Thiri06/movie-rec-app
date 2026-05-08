@@ -1,7 +1,7 @@
 const { requestTmdb } = require("../services/tmdbService");
 const { upsertMovieFromTmdb } = require("../services/movieService");
 const AiInsight = require("../models/AiInsight");
-const { generateMovieInsight } = require("../services/geminiService");
+const { INSIGHT_VERSION, generateMovieInsight } = require("../services/geminiService");
 
 const searchMovies = async (req, res, next) => {
   try {
@@ -50,7 +50,8 @@ const getMovieDetails = async (req, res, next) => {
       append_to_response: "videos,credits,recommendations,similar,release_dates",
     });
     const movie = await upsertMovieFromTmdb(data);
-    let aiInsight = await AiInsight.findOne({ tmdbId: movie.tmdbId });
+    const cachedAiInsight = await AiInsight.findOne({ tmdbId: movie.tmdbId });
+    let aiInsight = cachedAiInsight?.insightVersion === INSIGHT_VERSION ? cachedAiInsight : null;
     let aiInsightError = null;
 
     if (!aiInsight) {
@@ -63,8 +64,11 @@ const getMovieDetails = async (req, res, next) => {
               movieId: movie._id,
               tmdbId: movie.tmdbId,
               summary: generatedInsight.summary,
+              reasons: generatedInsight.reasons,
+              bestFor: generatedInsight.bestFor,
               moodTags: generatedInsight.moodTags,
               generatedBy: generatedInsight.generatedBy,
+              insightVersion: generatedInsight.insightVersion,
             },
             { new: true, upsert: true, setDefaultsOnInsert: true }
           );
@@ -82,6 +86,7 @@ const getMovieDetails = async (req, res, next) => {
       aiInsightAvailable: Boolean(aiInsight),
       aiInsightConfigured: Boolean(process.env.GEMINI_API_KEY),
       aiInsightError,
+      aiInsightVersion: INSIGHT_VERSION,
     });
   } catch (error) {
     next(error);
