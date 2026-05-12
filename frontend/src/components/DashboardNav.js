@@ -8,6 +8,7 @@ const DashboardNav = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user, onL
     { label: "Watch History", to: "/history" },
     { label: "Favorites", to: "/favorites" },
     { label: "Profile", to: "/profile" },
+    { label: "Credits", to: "/credits" },
   ];
 
   return (
@@ -42,13 +43,26 @@ const DashboardNav = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user, onL
             <NavLink
               key={item.to}
               to={item.to}
-              className="relative whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition md:text-sm"
+              className="relative flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-xs font-semibold transition md:text-sm"
               style={({ isActive }) => ({
                 backgroundColor: isActive ? `${colors.primary}f2` : "transparent",
                 color: isActive ? "#ffffff" : `${colors.text}bd`,
                 boxShadow: isActive ? `0 10px 24px ${colors.primary}24` : "none",
               })}
             >
+              {item.to === "/credits" ? (
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-black leading-none"
+                  style={{
+                    backgroundColor: `${colors.accent}24`,
+                    border: `1px solid ${colors.accent}`,
+                    color: colors.accent,
+                  }}
+                >
+                  i
+                </span>
+              ) : null}
               {item.label}
             </NavLink>
           ))}

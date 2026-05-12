@@ -2,6 +2,7 @@ export const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 export const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 export const BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w1280";
 export const PROFILE_BASE_URL = "https://image.tmdb.org/t/p/w185";
+export const PROVIDER_LOGO_BASE_URL = "https://image.tmdb.org/t/p/w92";
 
 export const WATCH_HISTORY_KEY = "yoko-watch-history";
 export const FAVORITES_KEY = "yoko-favorites";
@@ -28,6 +29,24 @@ export const getProfileUrl = (profilePath) => {
   }
 
   return `${PROFILE_BASE_URL}${profilePath}`;
+};
+
+export const getProviderLogoUrl = (logoPath) => {
+  if (!logoPath) {
+    return null;
+  }
+
+  return `${PROVIDER_LOGO_BASE_URL}${logoPath}`;
+};
+
+export const getPreferredWatchRegion = () => {
+  if (typeof navigator === "undefined") {
+    return "US";
+  }
+
+  const locale = navigator.language || navigator.languages?.[0] || "";
+  const region = locale.split("-")[1];
+  return region ? region.toUpperCase() : "US";
 };
 
 export const formatRating = (rating) => {

@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
+import TmdbCreditFooter from "../components/TmdbCreditFooter";
 import { auth } from "../firebase";
 import {
   getFavoriteMovies,
@@ -485,39 +486,7 @@ const DashboardPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) 
         </section>
       </main>
 
-      <footer
-        className="mx-auto mt-2 w-full max-w-7xl rounded-2xl px-4 py-5 md:px-8"
-        style={{
-          border: `1px solid ${colors.secondary}`,
-          backgroundColor: `${colors.background}e8`,
-        }}
-      >
-        <h4 className="text-sm font-bold uppercase tracking-[0.14em]" style={{ color: `${colors.text}b8` }}>
-          Credits
-        </h4>
-        <div className="mt-3 flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="space-y-2">
-            <img
-              src={`${process.env.PUBLIC_URL}/tmdb-logo.svg`}
-              alt="TMDB Logo"
-              className="h-6 w-auto md:h-7"
-              loading="lazy"
-            />
-            <p className="max-w-3xl text-xs leading-relaxed md:text-sm" style={{ color: `${colors.text}c7` }}>
-              This product uses the TMDB API but is not endorsed or certified by TMDB.
-            </p>
-          </div>
-          <a
-            href="https://www.themoviedb.org"
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs font-semibold underline decoration-2 underline-offset-4 md:text-sm"
-            style={{ color: colors.accent }}
-          >
-            View TMDB
-          </a>
-        </div>
-      </footer>
+      <TmdbCreditFooter colors={colors} />
     </div>
   );
 };

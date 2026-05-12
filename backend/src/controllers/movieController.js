@@ -49,6 +49,18 @@ const getMovieDetails = async (req, res, next) => {
     const data = await requestTmdb(`/movie/${req.params.tmdbId}`, {
       append_to_response: "videos,credits,recommendations,similar,release_dates",
     });
+    let watchProviders = null;
+
+    try {
+      watchProviders = await requestTmdb(`/movie/${req.params.tmdbId}/watch/providers`);
+    } catch (watchProviderError) {
+      console.warn("TMDb watch provider fetch failed:", watchProviderError.message);
+    }
+
+    const enrichedData = {
+      ...data,
+      watchProviders,
+    };
     const movie = await upsertMovieFromTmdb(data);
     const cachedAiInsight = await AiInsight.findOne({ tmdbId: movie.tmdbId });
     let aiInsight = cachedAiInsight?.insightVersion === INSIGHT_VERSION ? cachedAiInsight : null;
@@ -80,7 +92,7 @@ const getMovieDetails = async (req, res, next) => {
     }
 
     res.json({
-      tmdb: data,
+      tmdb: enrichedData,
       movie,
       aiInsight,
       aiInsightAvailable: Boolean(aiInsight),

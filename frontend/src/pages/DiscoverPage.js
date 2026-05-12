@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
+import TmdbCreditFooter from "../components/TmdbCreditFooter";
 import { auth } from "../firebase";
 import { addFavoriteMovie, getCurrentUserProfile } from "../utils/apiClient";
 import {
@@ -524,6 +525,8 @@ const DiscoverPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =
           ) : null}
         </section>
       </main>
+
+      <TmdbCreditFooter colors={colors} />
     </div>
   );
 };

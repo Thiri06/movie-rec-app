@@ -8,6 +8,7 @@ import DashboardPage from "./pages/DashboardPage";
 import DiscoverPage from "./pages/DiscoverPage";
 import ProfilePage from "./pages/ProfilePage";
 import FavoritesPage from "./pages/FavoritesPage";
+import CreditsPage from "./pages/CreditsPage";
 import MovieDetailsPage from "./pages/MovieDetailsPage";
 import WatchHistoryPage from "./pages/WatchHistoryPage";
 import ErrorPage from "./pages/ErrorPage";
@@ -307,6 +308,20 @@ function App() {
           element={
             <ProtectedRoute user={user} isAuthReady={isAuthReady}>
               <ProfilePage
+                colors={colors}
+                themeMode={themeMode}
+                onToggleTheme={handleToggleTheme}
+                ThemeSwitch={ThemeSwitch}
+                user={user}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/credits"
+          element={
+            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
+              <CreditsPage
                 colors={colors}
                 themeMode={themeMode}
                 onToggleTheme={handleToggleTheme}

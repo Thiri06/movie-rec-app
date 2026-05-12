@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
 import MovieCard from "../components/MovieCard";
+import TmdbCreditFooter from "../components/TmdbCreditFooter";
 import { auth } from "../firebase";
 import { addFavoriteMovie, getMovieDetails, markMovieWatched, recordMovieDetailView } from "../utils/apiClient";
 import {
@@ -12,6 +13,8 @@ import {
   formatRating,
   getBackdropUrl,
   getPosterUrl,
+  getPreferredWatchRegion,
+  getProviderLogoUrl,
   getProfileUrl,
   pickTrailer,
 } from "../utils/movieApi";
@@ -97,6 +100,53 @@ const SectionShell = ({ title, action, colors, children }) => (
   </section>
 );
 
+const WatchProviderGroup = ({ title, providers = [], colors }) => {
+  if (!providers.length) {
+    return null;
+  }
+
+  return (
+    <div>
+      <h4 className="text-sm font-bold uppercase tracking-[0.14em]" style={{ color: `${colors.text}99` }}>
+        {title}
+      </h4>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+        {providers.map((provider) => {
+          const logoUrl = getProviderLogoUrl(provider.logo_path);
+
+          return (
+            <div
+              key={`${title}-${provider.provider_id}`}
+              className="flex min-h-[92px] flex-col items-center justify-center gap-2 rounded-2xl p-3 text-center"
+              style={{
+                backgroundColor: `${colors.background}d9`,
+                border: `1px solid ${colors.text}12`,
+              }}
+            >
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={provider.provider_name}
+                  className="h-10 w-10 rounded-xl object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold"
+                  style={{ backgroundColor: colors.secondary, color: colors.text }}
+                >
+                  {provider.provider_name?.slice(0, 1) || "?"}
+                </div>
+              )}
+              <p className="text-xs font-semibold leading-tight">{provider.provider_name}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) => {
   const { movieId } = useParams();
   const navigate = useNavigate();
@@ -152,6 +202,21 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
   const languageNames = (movie?.spoken_languages || []).map((language) => language.english_name).filter(Boolean);
   const countryNames = (movie?.production_countries || []).map((country) => country.name).filter(Boolean);
   const companyNames = (movie?.production_companies || []).map((company) => company.name).filter(Boolean).slice(0, 4);
+  const preferredWatchRegion = useMemo(() => getPreferredWatchRegion(), []);
+  const watchProviderResults = movie?.watchProviders?.results || {};
+  const watchRegion = watchProviderResults[preferredWatchRegion]
+    ? preferredWatchRegion
+    : watchProviderResults.US
+      ? "US"
+      : Object.keys(watchProviderResults)[0] || preferredWatchRegion;
+  const watchProviderData = watchProviderResults[watchRegion];
+  const watchProviderGroups = [
+    { title: "Free", providers: watchProviderData?.free || [] },
+    { title: "Free with Ads", providers: watchProviderData?.ads || [] },
+    { title: "Subscription", providers: watchProviderData?.flatrate || [] },
+    { title: "Rent", providers: watchProviderData?.rent || [] },
+    { title: "Buy", providers: watchProviderData?.buy || [] },
+  ].filter((group) => group.providers.length > 0);
 
   const handleSignOut = async () => {
     try {
@@ -487,6 +552,64 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
                   </SectionShell>
                 ) : null}
 
+                <SectionShell
+                  title="Watch Options"
+                  colors={colors}
+                  action={
+                    <span
+                      className="w-fit rounded-full px-3 py-1 text-xs font-semibold"
+                      style={{ backgroundColor: `${colors.secondary}c9`, color: colors.text }}
+                    >
+                      {watchRegion}
+                    </span>
+                  }
+                >
+                  {watchProviderGroups.length > 0 ? (
+                    <div className="grid gap-6">
+                      <p className="text-sm leading-relaxed" style={{ color: `${colors.text}c9` }}>
+                        Legal streaming availability varies by country and provider. YOKO links to available services
+                        instead of hosting full movies.
+                      </p>
+                      {watchProviderGroups.map((group) => (
+                        <WatchProviderGroup
+                          key={group.title}
+                          title={group.title}
+                          providers={group.providers}
+                          colors={colors}
+                        />
+                      ))}
+                      {watchProviderData?.link ? (
+                        <a
+                          href={watchProviderData.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-fit rounded-full px-5 py-3 text-sm font-semibold"
+                          style={{ backgroundColor: colors.primary, color: "#ffffff" }}
+                        >
+                          View all watch options
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      <p className="text-sm leading-relaxed" style={{ color: `${colors.text}c9` }}>
+                        No legal streaming, rent, buy, or free provider options were found for this region yet.
+                      </p>
+                      {trailer ? (
+                        <a
+                          href={`https://www.youtube.com/watch?v=${trailer.key}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-fit rounded-full px-5 py-3 text-sm font-semibold"
+                          style={{ backgroundColor: colors.secondary, color: colors.text, border: `1px solid ${colors.accent}` }}
+                        >
+                          Watch Trailer
+                        </a>
+                      ) : null}
+                    </div>
+                  )}
+                </SectionShell>
+
                 <SectionShell title="Top Cast" colors={colors}>
                   {cast.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
@@ -573,6 +696,8 @@ const MovieDetailsPage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user 
           </>
         ) : null}
       </main>
+
+      <TmdbCreditFooter colors={colors} />
     </div>
   );
 };

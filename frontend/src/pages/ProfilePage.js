@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import DashboardNav from "../components/DashboardNav";
+import TmdbCreditFooter from "../components/TmdbCreditFooter";
 import { auth } from "../firebase";
 import { getCurrentUserProfile, updateUserPreferences } from "../utils/apiClient";
 import { getAgeFromBirthDate, getContentLimitLabel, isUnderageProfile } from "../utils/movieApi";
@@ -453,6 +454,8 @@ const ProfilePage = ({ colors, themeMode, onToggleTheme, ThemeSwitch, user }) =>
           </div>
         </section>
       </main>
+
+      <TmdbCreditFooter colors={colors} />
     </div>
   );
 };
