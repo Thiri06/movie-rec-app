@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1850" viewBox="0 0 1800 1850">
+  <defs>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .boundary { fill: #ffffff; stroke: #26324a; stroke-width: 3; }
+      .title { font: 700 32px Arial, sans-serif; fill: #172033; text-anchor: middle; }
+      .actor-label { font: 700 20px Arial, sans-serif; fill: #172033; text-anchor: middle; }
+      .usecase { fill: #eef5ff; stroke: #2f65d0; stroke-width: 2.5; }
+      .supporting { fill: #fff7e8; stroke: #d88a1d; stroke-width: 2.5; }
+      .text { font: 600 18px Arial, sans-serif; fill: #172033; text-anchor: middle; dominant-baseline: middle; }
+      .small { font: 600 14px Arial, sans-serif; fill: #3c465c; text-anchor: middle; dominant-baseline: middle; }
+      .line { stroke: #344057; stroke-width: 2; fill: none; }
+      .actor-line { stroke: #344057; stroke-width: 2; fill: none; }
+      .dashed { stroke: #687286; stroke-width: 2; fill: none; stroke-dasharray: 8 7; }
+      .rel { font: 600 14px Arial, sans-serif; fill: #5b6578; text-anchor: middle; }
+      .note { fill: #ffffff; stroke: #c6ccd8; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#687286" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1800" height="1850" />
+
+  <!-- System boundary -->
+  <rect class="boundary" x="450" y="55" width="720" height="1710" rx="24" />
+  <text class="title" x="810" y="105">YOKO Movie Recommendation Web App</text>
+
+  <!-- Actor helper shapes: User -->
+  <circle cx="155" cy="280" r="34" fill="#ffffff" stroke="#172033" stroke-width="3" />
+  <line class="actor-line" x1="155" y1="314" x2="155" y2="425" />
+  <line class="actor-line" x1="85" y1="360" x2="225" y2="360" />
+  <line class="actor-line" x1="155" y1="425" x2="90" y2="535" />
+  <line class="actor-line" x1="155" y1="425" x2="220" y2="535" />
+  <text class="actor-label" x="155" y="590">User</text>
+
+  <!-- External actors represented as human figures -->
+  <circle cx="1510" cy="170" r="30" fill="#ffffff" stroke="#172033" stroke-width="3" />
+  <line class="actor-line" x1="1510" y1="200" x2="1510" y2="295" />
+  <line class="actor-line" x1="1450" y1="235" x2="1570" y2="235" />
+  <line class="actor-line" x1="1510" y1="295" x2="1455" y2="380" />
+  <line class="actor-line" x1="1510" y1="295" x2="1565" y2="380" />
+  <text class="actor-label" x="1510" y="425">Firebase Auth</text>
+
+  <circle cx="1510" cy="560" r="30" fill="#ffffff" stroke="#172033" stroke-width="3" />
+  <line class="actor-line" x1="1510" y1="590" x2="1510" y2="685" />
+  <line class="actor-line" x1="1450" y1="625" x2="1570" y2="625" />
+  <line class="actor-line" x1="1510" y1="685" x2="1455" y2="770" />
+  <line class="actor-line" x1="1510" y1="685" x2="1565" y2="770" />
+  <text class="actor-label" x="1510" y="815">TMDb API</text>
+
+  <circle cx="1510" cy="1020" r="30" fill="#ffffff" stroke="#172033" stroke-width="3" />
+  <line class="actor-line" x1="1510" y1="1050" x2="1510" y2="1145" />
+  <line class="actor-line" x1="1450" y1="1085" x2="1570" y2="1085" />
+  <line class="actor-line" x1="1510" y1="1145" x2="1455" y2="1230" />
+  <line class="actor-line" x1="1510" y1="1145" x2="1565" y2="1230" />
+  <text class="actor-label" x="1510" y="1275">Gemini API</text>
+
+  <circle cx="1510" cy="1410" r="30" fill="#ffffff" stroke="#172033" stroke-width="3" />
+  <line class="actor-line" x1="1510" y1="1440" x2="1510" y2="1535" />
+  <line class="actor-line" x1="1450" y1="1475" x2="1570" y2="1475" />
+  <line class="actor-line" x1="1510" y1="1535" x2="1455" y2="1620" />
+  <line class="actor-line" x1="1510" y1="1535" x2="1565" y2="1620" />
+  <text class="actor-label" x="1510" y="1665">MongoDB</text>
+
+  <!-- Use cases in one vertical column -->
+  <ellipse class="usecase" cx="810" cy="170" rx="215" ry="42" />
+  <text class="text" x="810" y="170">Login with Google</text>
+
+  <ellipse class="usecase" cx="810" cy="275" rx="215" ry="42" />
+  <text class="text" x="810" y="275">Browse Dashboard</text>
+
+  <ellipse class="usecase" cx="810" cy="380" rx="215" ry="42" />
+  <text class="text" x="810" y="380">Search Movies</text>
+
+  <ellipse class="usecase" cx="810" cy="485" rx="215" ry="42" />
+  <text class="text" x="810" y="485">Discover Movies by Filters</text>
+
+  <ellipse class="usecase" cx="810" cy="590" rx="215" ry="42" />
+  <text class="text" x="810" y="590">View Movie Details</text>
+
+  <ellipse class="supporting" cx="810" cy="695" rx="215" ry="42" />
+  <text class="text" x="810" y="695">Watch Trailer</text>
+
+  <ellipse class="supporting" cx="810" cy="800" rx="215" ry="42" />
+  <text class="text" x="810" y="800">View Legal Watch Options</text>
+
+  <ellipse class="usecase" cx="810" cy="905" rx="215" ry="42" />
+  <text class="text" x="810" y="905">Add Movie to Favourites</text>
+
+  <ellipse class="usecase" cx="810" cy="1010" rx="215" ry="42" />
+  <text class="text" x="810" y="1010">Mark Movie as Watched</text>
+
+  <ellipse class="usecase" cx="810" cy="1115" rx="215" ry="42" />
+  <text class="text" x="810" y="1115">View Watch History</text>
+
+  <ellipse class="usecase" cx="810" cy="1220" rx="215" ry="42" />
+  <text class="text" x="810" y="1220">Manage Profile Preferences</text>
+
+  <ellipse class="usecase" cx="810" cy="1325" rx="215" ry="42" />
+  <text class="text" x="810" y="1325">Receive Recommendations</text>
+
+  <ellipse class="supporting" cx="810" cy="1430" rx="215" ry="42" />
+  <text class="text" x="810" y="1430">View AI Movie Insights</text>
+
+  <ellipse class="supporting" cx="810" cy="1535" rx="215" ry="42" />
+  <text class="text" x="810" y="1535">View Credits/About</text>
+
+  <ellipse class="usecase" cx="810" cy="1640" rx="215" ry="42" />
+  <text class="text" x="810" y="1640">Content Safety Filtering</text>
+
+  <!-- Clean user association bus -->
+  <line class="line" x1="255" y1="360" x2="390" y2="360" />
+  <line class="line" x1="390" y1="170" x2="390" y2="1640" />
+  <line class="line" x1="390" y1="170" x2="595" y2="170" />
+  <line class="line" x1="390" y1="275" x2="595" y2="275" />
+  <line class="line" x1="390" y1="380" x2="595" y2="380" />
+  <line class="line" x1="390" y1="485" x2="595" y2="485" />
+  <line class="line" x1="390" y1="590" x2="595" y2="590" />
+  <line class="line" x1="390" y1="695" x2="595" y2="695" />
+  <line class="line" x1="390" y1="800" x2="595" y2="800" />
+  <line class="line" x1="390" y1="905" x2="595" y2="905" />
+  <line class="line" x1="390" y1="1010" x2="595" y2="1010" />
+  <line class="line" x1="390" y1="1115" x2="595" y2="1115" />
+  <line class="line" x1="390" y1="1220" x2="595" y2="1220" />
+  <line class="line" x1="390" y1="1325" x2="595" y2="1325" />
+  <line class="line" x1="390" y1="1430" x2="595" y2="1430" />
+  <line class="line" x1="390" y1="1535" x2="595" y2="1535" />
+  <line class="line" x1="390" y1="1640" x2="595" y2="1640" />
+
+  <!-- External actor associations routed through a right-side bus -->
+  <line class="line" x1="1025" y1="170" x2="1320" y2="170" />
+  <line class="line" x1="1320" y1="170" x2="1450" y2="235" />
+  <text class="rel" x="1160" y="152">verify identity</text>
+
+  <line class="line" x1="1025" y1="380" x2="1320" y2="380" />
+  <line class="line" x1="1025" y1="485" x2="1320" y2="485" />
+  <line class="line" x1="1025" y1="590" x2="1320" y2="590" />
+  <line class="line" x1="1025" y1="800" x2="1320" y2="800" />
+  <line class="line" x1="1320" y1="380" x2="1320" y2="800" />
+  <line class="line" x1="1320" y1="625" x2="1450" y2="625" />
+  <text class="rel" x="1215" y="362">movie data</text>
+  <text class="rel" x="1215" y="782">watch providers</text>
+
+  <line class="line" x1="1025" y1="1430" x2="1320" y2="1430" />
+  <line class="line" x1="1320" y1="1430" x2="1450" y2="1085" />
+  <text class="rel" x="1205" y="1412">generate insights</text>
+
+  <line class="line" x1="1025" y1="905" x2="1320" y2="905" />
+  <line class="line" x1="1025" y1="1010" x2="1320" y2="1010" />
+  <line class="line" x1="1025" y1="1115" x2="1320" y2="1115" />
+  <line class="line" x1="1025" y1="1220" x2="1320" y2="1220" />
+  <line class="line" x1="1025" y1="1325" x2="1320" y2="1325" />
+  <line class="line" x1="1320" y1="905" x2="1320" y2="1475" />
+  <line class="line" x1="1320" y1="1475" x2="1450" y2="1475" />
+  <text class="rel" x="1210" y="887">save favourites</text>
+  <text class="rel" x="1210" y="1307">store recommendations</text>
+
+  <!-- Include/extend notes kept separate to avoid overlap -->
+  <rect class="note" x="1225" y="70" width="420" height="90" rx="14" />
+  <text class="small" x="1435" y="105">Logged-in features require Firebase authentication.</text>
+  <text class="small" x="1435" y="132">No admin or paid user role is currently used.</text>
+
+  <rect class="note" x="1225" y="1710" width="420" height="90" rx="14" />
+  <text class="small" x="1435" y="1740">Legal note: YOKO does not host full movies.</text>
+  <text class="small" x="1435" y="1767">It links to watch-provider options from TMDb.</text>
+
+  <!-- Legend -->
+  <rect x="75" y="1520" width="285" height="190" rx="16" fill="#ffffff" stroke="#c4cad7" stroke-width="2" />
+  <text class="actor-label" x="218" y="1560">Legend</text>
+  <ellipse class="usecase" cx="145" cy="1610" rx="55" ry="20" />
+  <text class="small" x="260" y="1610">Core app use case</text>
+  <ellipse class="supporting" cx="145" cy="1660" rx="55" ry="20" />
+  <text class="small" x="270" y="1660">Supporting/ethical feature</text>
+</svg>
