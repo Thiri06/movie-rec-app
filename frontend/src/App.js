@@ -98,20 +98,6 @@ const AppLayout = ({ colors, themeMode, onToggleTheme, children }) => {
   );
 };
 
-const FeaturePlaceholder = ({ title, description, colors, themeMode, onToggleTheme }) => {
-  return (
-    <AppLayout colors={colors} themeMode={themeMode} onToggleTheme={onToggleTheme}>
-      <h1 className="text-4xl font-bold md:text-5xl">{title}</h1>
-      <p
-        className="mt-4 max-w-2xl text-base leading-relaxed md:text-lg"
-        style={{ color: `${colors.text}cc` }}
-      >
-        {description}
-      </p>
-    </AppLayout>
-  );
-};
-
 const AuthLoadingScreen = ({ colors }) => {
   return (
     <div
@@ -289,20 +275,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* <Route
-          path="/recommendations"
-          element={
-            <ProtectedRoute user={user} isAuthReady={isAuthReady}>
-              <FeaturePlaceholder
-                title="Recommendations Coming Soon"
-                description="Personalized picks generated from your behavior and preferred genres will be shown on this page."
-                colors={colors}
-                themeMode={themeMode}
-                onToggleTheme={handleToggleTheme}
-              />
-            </ProtectedRoute>
-          }
-        /> */}
         <Route
           path="/profile"
           element={
