@@ -1,133 +1,174 @@
-# YOKO Movie Recommendation Frontend
+# YOKO Movie Intelligence Frontend
 
-This frontend is a Create React App single-page app that uses:
+YOKO is a React single-page application for discovering movies, viewing details, managing favorites and watch history, and receiving personalized recommendations through the Express/MongoDB backend.
 
-- React and React Router for the UI and page navigation.
+This README covers the frontend app in `frontend/`. For full-stack deployment notes, see [`../deployment-guide.md`](../deployment-guide.md).
+
+## Features
+
 - Firebase Authentication for email/password and Google sign-in.
-- TMDB browser API requests from the dashboard.
-- Tailwind CSS utility classes for styling.
+- Dashboard with trending movies, genres, and trailers.
+- Movie discovery, search, and detail pages powered by TMDB.
+- Favorites, watch history, user profile, and recommendation workflows through the backend API.
+- Responsive UI with light/dark theme support.
+- Client-side routing with React Router.
 
-The Express/MongoDB backend in `../backend` is separate. Static hosts can serve this frontend, but the backend must be deployed separately.
+## Tech Stack
 
-## Recommended Deployment
+- React 19
+- React Router
+- Firebase Web SDK
+- Tailwind CSS
+- Create React App
+- TMDB API
 
-Use Vercel for this frontend and Render for the backend. The full checklist is in `../deployment-guide.md`.
+## Prerequisites
 
-In Vercel, import the repository with these settings:
+- Node.js and npm
+- Firebase project with Authentication enabled
+- TMDB API key
+- Running backend API, either local or deployed
+
+## Getting Started
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell, you can use:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Fill in `.env`:
+
+```text
+REACT_APP_TMDB_API_KEY=your_tmdb_api_key
+REACT_APP_API_BASE_URL=http://localhost:5000/api
+
+REACT_APP_FIREBASE_API_KEY=your_firebase_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=your_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+REACT_APP_FIREBASE_APP_ID=your_app_id
+```
+
+Start the development server:
+
+```bash
+npm start
+```
+
+The app runs at:
+
+```text
+http://localhost:3000
+```
+
+## Environment Variables
+
+Create React App only exposes variables prefixed with `REACT_APP_`.
+
+| Variable | Purpose |
+| --- | --- |
+| `REACT_APP_API_BASE_URL` | Backend API base URL, for example `http://localhost:5000/api` or a deployed Render API URL. |
+| `REACT_APP_TMDB_API_KEY` | TMDB API key used by browser-side TMDB requests. |
+| `REACT_APP_FIREBASE_API_KEY` | Firebase web app API key. |
+| `REACT_APP_FIREBASE_AUTH_DOMAIN` | Firebase auth domain. |
+| `REACT_APP_FIREBASE_PROJECT_ID` | Firebase project ID. |
+| `REACT_APP_FIREBASE_STORAGE_BUCKET` | Firebase storage bucket. |
+| `REACT_APP_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID. |
+| `REACT_APP_FIREBASE_APP_ID` | Firebase web app ID. |
+
+Do not put backend-only secrets such as `MONGO_URI`, `GEMINI_API_KEY`, or `FIREBASE_SERVICE_ACCOUNT` in this frontend environment file.
+
+## Available Scripts
+
+Start the local dev server:
+
+```bash
+npm start
+```
+
+Build for production:
+
+```bash
+npm run build
+```
+
+Run tests:
+
+```bash
+npm test
+```
+
+Deploy the static build to GitHub Pages:
+
+```bash
+npm run deploy
+```
+
+## Deployment
+
+The recommended deployment is:
+
+- Frontend: Vercel
+- Backend: Render
+- Database: MongoDB Atlas
+
+For Vercel, use these project settings:
 
 ```text
 Root Directory: frontend
 Framework Preset: Create React App
 Build Command: npm run build
 Output Directory: build
+Install Command: npm install
 ```
 
-Set `REACT_APP_API_BASE_URL` to the deployed backend API:
+Set `REACT_APP_API_BASE_URL` in Vercel to your deployed backend API:
 
 ```text
 REACT_APP_API_BASE_URL=https://your-render-service.onrender.com/api
 ```
 
-The `vercel.json` file in this folder rewrites frontend routes to `index.html`, so direct visits such as `/login` work.
+The `vercel.json` file rewrites all frontend routes to `index.html`, so direct visits to routes such as `/login`, `/dashboard`, and `/movies/:movieId` work correctly.
 
-## GitHub Pages Deployment
+## GitHub Pages
 
-GitHub Pages is still possible for the frontend only, but it cannot run the backend. If you keep Pages, configure the build for the repository subpath:
+GitHub Pages can host only the static frontend. It cannot run the backend.
+
+If you deploy to GitHub Pages under `/movie-rec-app`, configure:
 
 ```text
 PUBLIC_URL=/movie-rec-app
 REACT_APP_API_BASE_URL=https://your-deployed-backend.example.com/api
 ```
 
-Do not deploy with `REACT_APP_API_BASE_URL=http://localhost:5000/api`; visitors' browsers would try to call their own computer instead of your backend. The backend also needs `CLIENT_ORIGIN=https://thiri06.github.io` so GitHub Pages is allowed by CORS.
-
-Deploy from this `frontend` folder:
+Then run:
 
 ```bash
-npm install
 npm run deploy
 ```
 
-Then in GitHub, open the repository settings:
+The `postbuild` script copies `build/index.html` to `build/404.html` so direct route refreshes can still load the React app on GitHub Pages.
 
-1. Go to `Settings` -> `Pages`.
-2. Set `Build and deployment` to `Deploy from a branch`.
-3. Select the `gh-pages` branch and `/ (root)` folder.
-4. Save, then wait a minute or two for Pages to publish.
+## Troubleshooting
 
-If you see GitHub's `404 File not found` page at `/movie-rec-app/`, Pages is not serving the built frontend. The common causes are that the `gh-pages` branch has not been deployed yet, Pages is pointed at `main` instead of `gh-pages`, or the built files are inside `frontend/build` on `main` instead of at the Pages publishing root.
+If Vercel fails with `Treating warnings as errors because process.env.CI = true`, fix the ESLint warning shown in the build log. Create React App treats warnings as build failures in CI.
 
-The router basename and `404.html` copy step are used for subpath hosting. The copied `404.html` lets direct visits like `/movie-rec-app/login` load the React app instead of showing GitHub's 404 page.
+If the deployed frontend still calls `localhost:5000`, update `REACT_APP_API_BASE_URL` in Vercel and redeploy. Frontend environment variables are compiled into the build.
 
-## Local Development
+If Firebase login fails on the deployed site, add the deployed Vercel domain in Firebase Authentication authorized domains.
 
-Create `frontend/.env` from `.env.example`, then add your Firebase and TMDB values. CRA only exposes environment variables prefixed with `REACT_APP_`.
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+If API calls are blocked by CORS, add the frontend URL to the backend `CLIENT_ORIGIN` environment variable and redeploy the backend.
