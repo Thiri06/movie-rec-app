@@ -74,30 +74,6 @@ const ThemeSwitch = ({ themeMode, onToggleTheme, colors }) => {
   );
 };
 
-const AppLayout = ({ colors, themeMode, onToggleTheme, children }) => {
-  return (
-    <div
-      className="min-h-screen"
-      style={{
-        backgroundColor: colors.background,
-        color: colors.text,
-        fontFamily: "Andika, sans-serif",
-      }}
-    >
-      <header className="flex items-center justify-between px-6 py-5 md:px-10">
-        <div className="text-2xl font-bold tracking-tight">
-          <span style={{ color: colors.primary }}>YO</span>
-          <span style={{ color: colors.text }}>K</span>
-          <span style={{ color: colors.accent }}>O</span>
-        </div>
-        <ThemeSwitch themeMode={themeMode} onToggleTheme={onToggleTheme} colors={colors} />
-      </header>
-
-      <main className="mx-auto flex max-w-4xl flex-col items-center px-6 pb-10 pt-16 text-center md:pt-24">{children}</main>
-    </div>
-  );
-};
-
 const AuthLoadingScreen = ({ colors }) => {
   return (
     <div
