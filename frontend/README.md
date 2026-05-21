@@ -7,15 +7,39 @@ This frontend is a Create React App single-page app that uses:
 - TMDB browser API requests from the dashboard.
 - Tailwind CSS utility classes for styling.
 
-The Express/MongoDB backend in `../backend` is separate. GitHub Pages can host this frontend only because Pages is static hosting; deploy the backend separately if you add API endpoints that the frontend must call.
+The Express/MongoDB backend in `../backend` is separate. Static hosts can serve this frontend, but the backend must be deployed separately.
+
+## Recommended Deployment
+
+Use Vercel for this frontend and Render for the backend. The full checklist is in `../deployment-guide.md`.
+
+In Vercel, import the repository with these settings:
+
+```text
+Root Directory: frontend
+Framework Preset: Create React App
+Build Command: npm run build
+Output Directory: build
+```
+
+Set `REACT_APP_API_BASE_URL` to the deployed backend API:
+
+```text
+REACT_APP_API_BASE_URL=https://your-render-service.onrender.com/api
+```
+
+The `vercel.json` file in this folder rewrites frontend routes to `index.html`, so direct visits such as `/login` work.
 
 ## GitHub Pages Deployment
 
-The app is configured for the repository URL:
+GitHub Pages is still possible for the frontend only, but it cannot run the backend. If you keep Pages, configure the build for the repository subpath:
 
 ```text
-https://thiri06.github.io/movie-rec-app/
+PUBLIC_URL=/movie-rec-app
+REACT_APP_API_BASE_URL=https://your-deployed-backend.example.com/api
 ```
+
+Do not deploy with `REACT_APP_API_BASE_URL=http://localhost:5000/api`; visitors' browsers would try to call their own computer instead of your backend. The backend also needs `CLIENT_ORIGIN=https://thiri06.github.io` so GitHub Pages is allowed by CORS.
 
 Deploy from this `frontend` folder:
 
@@ -23,14 +47,6 @@ Deploy from this `frontend` folder:
 npm install
 npm run deploy
 ```
-
-Before deploying, set `REACT_APP_API_BASE_URL` in `frontend/.env` to your deployed backend URL, for example:
-
-```text
-REACT_APP_API_BASE_URL=https://your-backend-domain.com/api
-```
-
-Do not deploy with `REACT_APP_API_BASE_URL=http://localhost:5000/api`; visitors' browsers would try to call their own computer instead of your backend. The backend also needs `CLIENT_ORIGIN=https://thiri06.github.io` so GitHub Pages is allowed by CORS.
 
 Then in GitHub, open the repository settings:
 
@@ -41,7 +57,7 @@ Then in GitHub, open the repository settings:
 
 If you see GitHub's `404 File not found` page at `/movie-rec-app/`, Pages is not serving the built frontend. The common causes are that the `gh-pages` branch has not been deployed yet, Pages is pointed at `main` instead of `gh-pages`, or the built files are inside `frontend/build` on `main` instead of at the Pages publishing root.
 
-The `homepage`, router basename, and `404.html` copy step are required because this repo is hosted under `/movie-rec-app/` rather than at the domain root. The copied `404.html` lets direct visits like `/movie-rec-app/login` load the React app instead of showing GitHub's 404 page.
+The router basename and `404.html` copy step are used for subpath hosting. The copied `404.html` lets direct visits like `/movie-rec-app/login` load the React app instead of showing GitHub's 404 page.
 
 ## Local Development
 
